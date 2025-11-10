@@ -4,6 +4,7 @@ import { app } from './app.js';
 import { initSocket } from './lib/socket.js';
 import { PrismaClient } from '@prisma/client';
 import { syncScheduler } from './services/syncScheduler.js';
+import { connectRabbitMQ } from './config/rabbitmq.js';
 
 // Load environment variables
 dotenv.config();
@@ -52,6 +53,19 @@ async function checkDatabaseConnection(): Promise<boolean> {
   }
 }
 
+async function checkRabbitMQConnection(): Promise<boolean> {
+  try {
+    await connectRabbitMQ();
+    return true;
+  } catch (error) {
+    console.error('\nRabbitMQ connection failed:');
+    if (error instanceof Error) {
+      console.error(`   ${error.message}`);
+    }
+    return false;
+  }
+}
+
 // Start server
 server.listen(PORT, async () => {
   // Prevent duplicate banner printing
@@ -60,14 +74,18 @@ server.listen(PORT, async () => {
 
   // Check database connection
   const dbConnected = await checkDatabaseConnection();
+  const rabbitConnected = await checkRabbitMQConnection();
 
   const base = `http://localhost:${PORT}`;
+  const rabbitUi = 'http://localhost:15672';
 
   const lines = [
     ' POS Server is running ',
     ` Base URL   : ${base} `,
     ` Swagger    : ${base}/api-docs `,
     ` Database   : ${dbConnected ? 'Connected' : 'Not Connected'} `,
+    ` RabbitMQ   : ${rabbitConnected ? 'Connected' : 'Not Connected'} `,
+    ` RabbitMQ UI: ${rabbitUi} `
   ];
   const width = Math.max(...lines.map(l => l.length)) + 2;
   const top = '┌' + '─'.repeat(width) + '┐';
@@ -82,5 +100,10 @@ server.listen(PORT, async () => {
     // Start automatic sync scheduler (runs every hour)
     syncScheduler.startAutomaticSync();
     console.log('✅ Automatic sync scheduler started (runs every hour)');
+  }
+
+  if (!rabbitConnected) {
+    console.error('⚠️  Warning: RabbitMQ is not connected. Messaging features will be unavailable.');
+    console.error('   Please verify your RabbitMQ server and environment variables.\n');
   }
 });
