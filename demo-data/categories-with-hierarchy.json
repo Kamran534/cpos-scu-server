@@ -1,0 +1,69 @@
+[
+  {
+    "name": "Electronics",
+    "description": "Electronic devices and accessories",
+    "sortOrder": 1,
+    "isActive": true
+  },
+  {
+    "name": "Smartphones",
+    "description": "Mobile phones and smartphones",
+    "parentCategoryId": null,
+    "sortOrder": 1,
+    "isActive": true
+  },
+  {
+    "name": "Laptops & Computers",
+    "description": "Laptops, desktops, and computer accessories",
+    "parentCategoryId": null,
+    "sortOrder": 2,
+    "isActive": true
+  },
+  {
+    "name": "Clothing & Apparel",
+    "description": "Men's, women's, and children's clothing",
+    "sortOrder": 2,
+    "isActive": true
+  },
+  {
+    "name": "Men's Clothing",
+    "description": "Men's shirts, pants, shoes, and accessories",
+    "parentCategoryId": null,
+    "sortOrder": 1,
+    "isActive": true
+  },
+  {
+    "name": "Women's Clothing",
+    "description": "Women's dresses, tops, shoes, and accessories",
+    "parentCategoryId": null,
+    "sortOrder": 2,
+    "isActive": true
+  },
+  {
+    "name": "Home & Kitchen",
+    "description": "Home improvement and kitchen essentials",
+    "sortOrder": 3,
+    "isActive": true
+  },
+  {
+    "name": "Kitchen Appliances",
+    "description": "Refrigerators, ovens, microwaves, and more",
+    "parentCategoryId": null,
+    "sortOrder": 1,
+    "isActive": true
+  },
+  {
+    "name": "Furniture",
+    "description": "Home and office furniture",
+    "parentCategoryId": null,
+    "sortOrder": 2,
+    "isActive": true
+  },
+  {
+    "name": "Sports & Outdoors",
+    "description": "Sports equipment and outdoor gear",
+    "sortOrder": 4,
+    "isActive": true
+  }
+]
+

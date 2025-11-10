@@ -1,0 +1,386 @@
+{
+  "products": [
+    {
+      "productCode": "IPHONE-15-PRO",
+      "name": "iPhone 15 Pro",
+      "description": "Latest iPhone with A17 Pro chip, titanium design, and advanced camera system",
+      "categoryName": "Smartphones",
+      "brandName": "Apple",
+      "supplierName": "Apple Inc",
+      "hasVariants": true,
+      "trackInventory": true,
+      "isTaxable": true,
+      "images": [
+        "assets/images/products/iphone-15-pro-1.jpg",
+        "assets/images/products/iphone-15-pro-2.jpg"
+      ],
+      "tags": ["smartphone", "apple", "premium", "5G"],
+      "variants": [
+        {
+          "sku": "IPHONE-15-PRO-128-BLUE",
+          "barcode": "1234567890123",
+          "variantName": "128GB - Natural Titanium",
+          "options": {
+            "storage": "128GB",
+            "color": "Natural Titanium"
+          },
+          "retailPrice": 999.00,
+          "wholesalePrice": 850.00,
+          "cost": 750.00,
+          "compareAtPrice": 1099.00,
+          "weight": 0.187,
+          "dimensions": {
+            "length": 15.9,
+            "width": 7.6,
+            "height": 0.83,
+            "unit": "cm"
+          },
+          "image": "assets/images/products/iphone-15-pro-natural-titanium.jpg"
+        },
+        {
+          "sku": "IPHONE-15-PRO-256-BLUE",
+          "barcode": "1234567890124",
+          "variantName": "256GB - Natural Titanium",
+          "options": {
+            "storage": "256GB",
+            "color": "Natural Titanium"
+          },
+          "retailPrice": 1099.00,
+          "wholesalePrice": 950.00,
+          "cost": 850.00,
+          "compareAtPrice": 1199.00,
+          "weight": 0.187,
+          "dimensions": {
+            "length": 15.9,
+            "width": 7.6,
+            "height": 0.83,
+            "unit": "cm"
+          },
+          "image": "assets/images/products/iphone-15-pro-natural-titanium.jpg"
+        },
+        {
+          "sku": "IPHONE-15-PRO-128-BLUE-TITANIUM",
+          "barcode": "1234567890125",
+          "variantName": "128GB - Blue Titanium",
+          "options": {
+            "storage": "128GB",
+            "color": "Blue Titanium"
+          },
+          "retailPrice": 999.00,
+          "wholesalePrice": 850.00,
+          "cost": 750.00,
+          "compareAtPrice": 1099.00,
+          "weight": 0.187,
+          "image": "assets/images/products/iphone-15-pro-blue-titanium.jpg"
+        }
+      ],
+      "inventory": [
+        {
+          "locationCode": "MAIN-STORE",
+          "quantityOnHand": 25,
+          "quantityAvailable": 20,
+          "quantityCommitted": 5,
+          "reorderPoint": 10,
+          "reorderQuantity": 20
+        }
+      ]
+    },
+    {
+      "productCode": "MACBOOK-PRO-14",
+      "name": "MacBook Pro 14-inch",
+      "description": "Powerful laptop with M3 chip, Liquid Retina XDR display",
+      "categoryName": "Laptops & Computers",
+      "brandName": "Apple",
+      "supplierName": "Apple Inc",
+      "hasVariants": true,
+      "trackInventory": true,
+      "isTaxable": true,
+      "images": [
+        "assets/images/products/macbook-pro-14-1.jpg"
+      ],
+      "tags": ["laptop", "apple", "professional"],
+      "variants": [
+        {
+          "sku": "MACBOOK-PRO-14-M3-512",
+          "barcode": "1234567890201",
+          "variantName": "M3 Chip - 512GB SSD - Space Gray",
+          "options": {
+            "chip": "M3",
+            "storage": "512GB",
+            "color": "Space Gray"
+          },
+          "retailPrice": 1599.00,
+          "wholesalePrice": 1400.00,
+          "cost": 1200.00,
+          "compareAtPrice": 1799.00,
+          "weight": 1.6,
+          "image": "assets/images/products/macbook-pro-14-space-gray.jpg"
+        },
+        {
+          "sku": "MACBOOK-PRO-14-M3-1TB",
+          "barcode": "1234567890202",
+          "variantName": "M3 Chip - 1TB SSD - Space Gray",
+          "options": {
+            "chip": "M3",
+            "storage": "1TB",
+            "color": "Space Gray"
+          },
+          "retailPrice": 1799.00,
+          "wholesalePrice": 1600.00,
+          "cost": 1400.00,
+          "compareAtPrice": 1999.00,
+          "weight": 1.6,
+          "image": "assets/images/products/macbook-pro-14-space-gray.jpg"
+        }
+      ],
+      "inventory": [
+        {
+          "locationCode": "MAIN-STORE",
+          "quantityOnHand": 15,
+          "quantityAvailable": 12,
+          "quantityCommitted": 3,
+          "reorderPoint": 5,
+          "reorderQuantity": 10
+        }
+      ]
+    },
+    {
+      "productCode": "SAMSUNG-GALAXY-S24",
+      "name": "Samsung Galaxy S24",
+      "description": "Flagship Android smartphone with AI features and advanced camera",
+      "categoryName": "Smartphones",
+      "brandName": "Samsung",
+      "supplierName": "Samsung Electronics",
+      "hasVariants": true,
+      "trackInventory": true,
+      "isTaxable": true,
+      "images": [
+        "assets/images/products/samsung-galaxy-s24-1.jpg"
+      ],
+      "tags": ["smartphone", "samsung", "android", "5G"],
+      "variants": [
+        {
+          "sku": "SAMSUNG-S24-128-BLACK",
+          "barcode": "1234567890301",
+          "variantName": "128GB - Phantom Black",
+          "options": {
+            "storage": "128GB",
+            "color": "Phantom Black"
+          },
+          "retailPrice": 799.00,
+          "wholesalePrice": 700.00,
+          "cost": 600.00,
+          "compareAtPrice": 899.00,
+          "weight": 0.168,
+          "image": "assets/images/products/samsung-s24-black.jpg"
+        },
+        {
+          "sku": "SAMSUNG-S24-256-BLACK",
+          "barcode": "1234567890302",
+          "variantName": "256GB - Phantom Black",
+          "options": {
+            "storage": "256GB",
+            "color": "Phantom Black"
+          },
+          "retailPrice": 899.00,
+          "wholesalePrice": 800.00,
+          "cost": 700.00,
+          "compareAtPrice": 999.00,
+          "weight": 0.168,
+          "image": "assets/images/products/samsung-s24-black.jpg"
+        },
+        {
+          "sku": "SAMSUNG-S24-128-Violet",
+          "barcode": "1234567890303",
+          "variantName": "128GB - Violet",
+          "options": {
+            "storage": "128GB",
+            "color": "Violet"
+          },
+          "retailPrice": 799.00,
+          "wholesalePrice": 700.00,
+          "cost": 600.00,
+          "compareAtPrice": 899.00,
+          "weight": 0.168,
+          "image": "assets/images/products/samsung-s24-violet.jpg"
+        }
+      ],
+      "inventory": [
+        {
+          "locationCode": "MAIN-STORE",
+          "quantityOnHand": 30,
+          "quantityAvailable": 28,
+          "quantityCommitted": 2,
+          "reorderPoint": 15,
+          "reorderQuantity": 25
+        }
+      ]
+    },
+    {
+      "productCode": "AIRPODS-PRO-2",
+      "name": "AirPods Pro (2nd Generation)",
+      "description": "Active Noise Cancellation, Spatial Audio, and MagSafe Charging Case",
+      "categoryName": "Audio Devices",
+      "brandName": "Apple",
+      "supplierName": "Apple Inc",
+      "hasVariants": false,
+      "trackInventory": true,
+      "isTaxable": true,
+      "images": [
+        "assets/images/products/airpods-pro-2-1.jpg"
+      ],
+      "tags": ["headphones", "wireless", "apple", "noise-cancellation"],
+      "variants": [
+        {
+          "sku": "AIRPODS-PRO-2",
+          "barcode": "1234567890401",
+          "variantName": "Standard",
+          "retailPrice": 249.00,
+          "wholesalePrice": 220.00,
+          "cost": 180.00,
+          "compareAtPrice": 279.00,
+          "weight": 0.056,
+          "image": "assets/images/products/airpods-pro-2.jpg"
+        }
+      ],
+      "inventory": [
+        {
+          "locationCode": "MAIN-STORE",
+          "quantityOnHand": 50,
+          "quantityAvailable": 48,
+          "quantityCommitted": 2,
+          "reorderPoint": 20,
+          "reorderQuantity": 30
+        }
+      ]
+    },
+    {
+      "productCode": "SONY-WH-1000XM5",
+      "name": "Sony WH-1000XM5 Wireless Headphones",
+      "description": "Industry-leading noise cancellation with premium sound quality",
+      "categoryName": "Audio Devices",
+      "brandName": "Sony",
+      "supplierName": "Sony Corporation",
+      "hasVariants": true,
+      "trackInventory": true,
+      "isTaxable": true,
+      "images": [
+        "assets/images/products/sony-wh1000xm5-1.jpg"
+      ],
+      "tags": ["headphones", "wireless", "sony", "noise-cancellation"],
+      "variants": [
+        {
+          "sku": "SONY-WH1000XM5-BLACK",
+          "barcode": "1234567890501",
+          "variantName": "Black",
+          "options": {
+            "color": "Black"
+          },
+          "retailPrice": 399.00,
+          "wholesalePrice": 350.00,
+          "cost": 280.00,
+          "compareAtPrice": 449.00,
+          "weight": 0.25,
+          "image": "assets/images/products/sony-wh1000xm5-black.jpg"
+        },
+        {
+          "sku": "SONY-WH1000XM5-SILVER",
+          "barcode": "1234567890502",
+          "variantName": "Silver",
+          "options": {
+            "color": "Silver"
+          },
+          "retailPrice": 399.00,
+          "wholesalePrice": 350.00,
+          "cost": 280.00,
+          "compareAtPrice": 449.00,
+          "weight": 0.25,
+          "image": "assets/images/products/sony-wh1000xm5-silver.jpg"
+        }
+      ],
+      "inventory": [
+        {
+          "locationCode": "MAIN-STORE",
+          "quantityOnHand": 20,
+          "quantityAvailable": 18,
+          "quantityCommitted": 2,
+          "reorderPoint": 10,
+          "reorderQuantity": 15
+        }
+      ]
+    },
+    {
+      "productCode": "IPAD-AIR-M2",
+      "name": "iPad Air (M2 Chip)",
+      "description": "Powerful tablet with M2 chip, 11-inch Liquid Retina display",
+      "categoryName": "Tablets",
+      "brandName": "Apple",
+      "supplierName": "Apple Inc",
+      "hasVariants": true,
+      "trackInventory": true,
+      "isTaxable": true,
+      "images": [
+        "assets/images/products/ipad-air-m2-1.jpg"
+      ],
+      "tags": ["tablet", "apple", "ipad"],
+      "variants": [
+        {
+          "sku": "IPAD-AIR-M2-128-BLUE",
+          "barcode": "1234567890601",
+          "variantName": "128GB - Blue",
+          "options": {
+            "storage": "128GB",
+            "color": "Blue"
+          },
+          "retailPrice": 599.00,
+          "wholesalePrice": 520.00,
+          "cost": 450.00,
+          "compareAtPrice": 649.00,
+          "weight": 0.462,
+          "image": "assets/images/products/ipad-air-blue.jpg"
+        },
+        {
+          "sku": "IPAD-AIR-M2-256-BLUE",
+          "barcode": "1234567890602",
+          "variantName": "256GB - Blue",
+          "options": {
+            "storage": "256GB",
+            "color": "Blue"
+          },
+          "retailPrice": 749.00,
+          "wholesalePrice": 650.00,
+          "cost": 570.00,
+          "compareAtPrice": 799.00,
+          "weight": 0.462,
+          "image": "assets/images/products/ipad-air-blue.jpg"
+        },
+        {
+          "sku": "IPAD-AIR-M2-128-PURPLE",
+          "barcode": "1234567890603",
+          "variantName": "128GB - Purple",
+          "options": {
+            "storage": "128GB",
+            "color": "Purple"
+          },
+          "retailPrice": 599.00,
+          "wholesalePrice": 520.00,
+          "cost": 450.00,
+          "compareAtPrice": 649.00,
+          "weight": 0.462,
+          "image": "assets/images/products/ipad-air-purple.jpg"
+        }
+      ],
+      "inventory": [
+        {
+          "locationCode": "MAIN-STORE",
+          "quantityOnHand": 18,
+          "quantityAvailable": 15,
+          "quantityCommitted": 3,
+          "reorderPoint": 8,
+          "reorderQuantity": 12
+        }
+      ]
+    }
+  ]
+}
+

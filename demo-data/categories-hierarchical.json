@@ -1,0 +1,270 @@
+{
+  "parentCategories": [
+    {
+      "name": "Electronics",
+      "description": "Electronic devices and accessories",
+      "image": "assets/images/categories/electronics.jpg",
+      "sortOrder": 1,
+      "isActive": true
+    },
+    {
+      "name": "Clothing & Apparel",
+      "description": "Men's, women's, and children's clothing",
+      "image": "assets/images/categories/clothing-apparel.jpg",
+      "sortOrder": 2,
+      "isActive": true
+    },
+    {
+      "name": "Home & Kitchen",
+      "description": "Home improvement and kitchen essentials",
+      "image": "assets/images/categories/home-kitchen.jpg",
+      "sortOrder": 3,
+      "isActive": true
+    },
+    {
+      "name": "Sports & Outdoors",
+      "description": "Sports equipment and outdoor gear",
+      "image": "assets/images/categories/sports-outdoors.jpg",
+      "sortOrder": 4,
+      "isActive": true
+    },
+    {
+      "name": "Health & Beauty",
+      "description": "Health products, cosmetics, and personal care items",
+      "image": "assets/images/categories/health-beauty.jpg",
+      "sortOrder": 5,
+      "isActive": true
+    },
+    {
+      "name": "Food & Beverages",
+      "description": "Food items, drinks, and beverages",
+      "image": "assets/images/categories/food-beverages.jpg",
+      "sortOrder": 6,
+      "isActive": true
+    }
+  ],
+  "subCategories": {
+    "Electronics": [
+      {
+        "name": "Smartphones",
+        "description": "Mobile phones and smartphones",
+        "image": "assets/images/categories/smartphones.jpg",
+        "sortOrder": 1,
+        "isActive": true
+      },
+      {
+        "name": "Laptops & Computers",
+        "description": "Laptops, desktops, and computer accessories",
+        "image": "assets/images/categories/laptops-computers.jpg",
+        "sortOrder": 2,
+        "isActive": true
+      },
+      {
+        "name": "Tablets",
+        "description": "Tablets and e-readers",
+        "image": "assets/images/categories/tablets.jpg",
+        "sortOrder": 3,
+        "isActive": true
+      },
+      {
+        "name": "Audio Devices",
+        "description": "Headphones, speakers, and audio equipment",
+        "image": "assets/images/categories/audio-devices.jpg",
+        "sortOrder": 4,
+        "isActive": true
+      },
+      {
+        "name": "Accessories",
+        "description": "Phone cases, chargers, cables, and other accessories",
+        "image": "assets/images/categories/electronics-accessories.jpg",
+        "sortOrder": 5,
+        "isActive": true
+      },
+      {
+        "name": "TVs & Monitors",
+        "description": "Televisions, monitors, and display screens",
+        "image": "assets/images/categories/tvs-monitors.jpg",
+        "sortOrder": 6,
+        "isActive": true
+      }
+    ],
+    "Clothing & Apparel": [
+      {
+        "name": "Men's Clothing",
+        "description": "Men's shirts, pants, shoes, and accessories",
+        "image": "assets/images/categories/mens-clothing.jpg",
+        "sortOrder": 1,
+        "isActive": true
+      },
+      {
+        "name": "Women's Clothing",
+        "description": "Women's dresses, tops, shoes, and accessories",
+        "image": "assets/images/categories/womens-clothing.jpg",
+        "sortOrder": 2,
+        "isActive": true
+      },
+      {
+        "name": "Kids' Clothing",
+        "description": "Children's clothing and accessories",
+        "image": "assets/images/categories/kids-clothing.jpg",
+        "sortOrder": 3,
+        "isActive": true
+      },
+      {
+        "name": "Shoes",
+        "description": "Men's, women's, and kids' footwear",
+        "image": "assets/images/categories/shoes.jpg",
+        "sortOrder": 4,
+        "isActive": true
+      },
+      {
+        "name": "Accessories",
+        "description": "Bags, wallets, belts, and fashion accessories",
+        "image": "assets/images/categories/clothing-accessories.jpg",
+        "sortOrder": 5,
+        "isActive": true
+      }
+    ],
+    "Home & Kitchen": [
+      {
+        "name": "Kitchen Appliances",
+        "description": "Refrigerators, ovens, microwaves, and more",
+        "image": "assets/images/categories/kitchen-appliances.jpg",
+        "sortOrder": 1,
+        "isActive": true
+      },
+      {
+        "name": "Furniture",
+        "description": "Home and office furniture",
+        "image": "assets/images/categories/furniture.jpg",
+        "sortOrder": 2,
+        "isActive": true
+      },
+      {
+        "name": "Home Decor",
+        "description": "Decorative items, lighting, and home accessories",
+        "image": "assets/images/categories/home-decor.jpg",
+        "sortOrder": 3,
+        "isActive": true
+      },
+      {
+        "name": "Bedding & Bath",
+        "description": "Bedding, towels, and bathroom essentials",
+        "image": "assets/images/categories/bedding-bath.jpg",
+        "sortOrder": 4,
+        "isActive": true
+      },
+      {
+        "name": "Kitchenware",
+        "description": "Cookware, utensils, and kitchen tools",
+        "image": "assets/images/categories/kitchenware.jpg",
+        "sortOrder": 5,
+        "isActive": true
+      }
+    ],
+    "Sports & Outdoors": [
+      {
+        "name": "Fitness Equipment",
+        "description": "Exercise machines, weights, and fitness gear",
+        "image": "assets/images/categories/fitness-equipment.jpg",
+        "sortOrder": 1,
+        "isActive": true
+      },
+      {
+        "name": "Outdoor Gear",
+        "description": "Camping, hiking, and outdoor equipment",
+        "image": "assets/images/categories/outdoor-gear.jpg",
+        "sortOrder": 2,
+        "isActive": true
+      },
+      {
+        "name": "Sports Apparel",
+        "description": "Athletic wear and sports clothing",
+        "image": "assets/images/categories/sports-apparel.jpg",
+        "sortOrder": 3,
+        "isActive": true
+      },
+      {
+        "name": "Team Sports",
+        "description": "Basketballs, footballs, soccer balls, and team sports equipment",
+        "image": "assets/images/categories/team-sports.jpg",
+        "sortOrder": 4,
+        "isActive": true
+      }
+    ],
+    "Health & Beauty": [
+      {
+        "name": "Skincare",
+        "description": "Face creams, cleansers, and skincare products",
+        "image": "assets/images/categories/skincare.jpg",
+        "sortOrder": 1,
+        "isActive": true
+      },
+      {
+        "name": "Makeup",
+        "description": "Cosmetics, lipstick, foundation, and makeup products",
+        "image": "assets/images/categories/makeup.jpg",
+        "sortOrder": 2,
+        "isActive": true
+      },
+      {
+        "name": "Hair Care",
+        "description": "Shampoo, conditioner, hair styling products",
+        "image": "assets/images/categories/hair-care.jpg",
+        "sortOrder": 3,
+        "isActive": true
+      },
+      {
+        "name": "Personal Care",
+        "description": "Body care, hygiene products, and toiletries",
+        "image": "assets/images/categories/personal-care.jpg",
+        "sortOrder": 4,
+        "isActive": true
+      },
+      {
+        "name": "Fragrances",
+        "description": "Perfumes, colognes, and fragrances",
+        "image": "assets/images/categories/fragrances.jpg",
+        "sortOrder": 5,
+        "isActive": true
+      }
+    ],
+    "Food & Beverages": [
+      {
+        "name": "Groceries",
+        "description": "Fresh produce, packaged foods, and groceries",
+        "image": "assets/images/categories/groceries.jpg",
+        "sortOrder": 1,
+        "isActive": true
+      },
+      {
+        "name": "Beverages",
+        "description": "Soft drinks, juices, water, and beverages",
+        "image": "assets/images/categories/beverages.jpg",
+        "sortOrder": 2,
+        "isActive": true
+      },
+      {
+        "name": "Snacks",
+        "description": "Chips, cookies, candies, and snack foods",
+        "image": "assets/images/categories/snacks.jpg",
+        "sortOrder": 3,
+        "isActive": true
+      },
+      {
+        "name": "Frozen Foods",
+        "description": "Frozen meals, vegetables, and frozen products",
+        "image": "assets/images/categories/frozen-foods.jpg",
+        "sortOrder": 4,
+        "isActive": true
+      },
+      {
+        "name": "Dairy & Eggs",
+        "description": "Milk, cheese, yogurt, and eggs",
+        "image": "assets/images/categories/dairy-eggs.jpg",
+        "sortOrder": 5,
+        "isActive": true
+      }
+    ]
+  }
+}

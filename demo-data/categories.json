@@ -1,0 +1,72 @@
+[
+  {
+    "name": "Electronics",
+    "description": "Electronic devices and accessories",
+    "image": "assets/images/categories/electronics.jpg",
+    "sortOrder": 1,
+    "isActive": true
+  },
+  {
+    "name": "Clothing & Apparel",
+    "description": "Men's, women's, and children's clothing",
+    "image": "assets/images/categories/clothing-apparel.jpg",
+    "sortOrder": 2,
+    "isActive": true
+  },
+  {
+    "name": "Home & Kitchen",
+    "description": "Home improvement and kitchen essentials",
+    "image": "assets/images/categories/home-kitchen.jpg",
+    "sortOrder": 3,
+    "isActive": true
+  },
+  {
+    "name": "Sports & Outdoors",
+    "description": "Sports equipment and outdoor gear",
+    "image": "assets/images/categories/sports-outdoors.jpg",
+    "sortOrder": 4,
+    "isActive": true
+  },
+  {
+    "name": "Books & Media",
+    "description": "Books, movies, music, and digital media",
+    "image": "assets/images/categories/books-media.jpg",
+    "sortOrder": 5,
+    "isActive": true
+  },
+  {
+    "name": "Health & Beauty",
+    "description": "Health products, cosmetics, and personal care items",
+    "image": "assets/images/categories/health-beauty.jpg",
+    "sortOrder": 6,
+    "isActive": true
+  },
+  {
+    "name": "Toys & Games",
+    "description": "Toys, games, and entertainment for all ages",
+    "image": "assets/images/categories/toys-games.jpg",
+    "sortOrder": 7,
+    "isActive": true
+  },
+  {
+    "name": "Automotive",
+    "description": "Car parts, accessories, and automotive supplies",
+    "image": "assets/images/categories/automotive.jpg",
+    "sortOrder": 8,
+    "isActive": true
+  },
+  {
+    "name": "Food & Beverages",
+    "description": "Food items, drinks, and beverages",
+    "image": "assets/images/categories/food-beverages.jpg",
+    "sortOrder": 9,
+    "isActive": true
+  },
+  {
+    "name": "Office Supplies",
+    "description": "Office equipment, stationery, and supplies",
+    "image": "assets/images/categories/office-supplies.jpg",
+    "sortOrder": 10,
+    "isActive": true
+  }
+]
