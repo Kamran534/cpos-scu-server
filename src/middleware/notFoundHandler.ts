@@ -3,7 +3,8 @@ import { Request, Response, NextFunction } from 'express';
 export const notFoundHandler = (
   req: Request,
   res: Response,
-  next: NextFunction
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _next: NextFunction
 ) => {
   res.status(404).json({
     success: false,

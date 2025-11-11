@@ -1,22 +1,23 @@
 import http from 'http';
 import dotenv from 'dotenv';
 import { app } from './app.js';
-import { initSocket } from './lib/socket.js';
+import { initSocket } from './config/socket.js';
 import { PrismaClient } from '@prisma/client';
 import { syncScheduler } from './services/syncScheduler.js';
 import { connectRabbitMQ } from './config/rabbitmq.js';
+import { config } from './config/index.js';
 
 // Load environment variables
 dotenv.config();
 
 // Verify DATABASE_URL is loaded
-if (!process.env.DATABASE_URL) {
+if (!config.databaseUrl) {
   console.error('\nError: DATABASE_URL is not set in environment variables.');
   console.error('   Please check your .env file and ensure DATABASE_URL is configured.\n');
   process.exit(1);
 }
 
-const PORT = process.env.PORT ? Number(process.env.PORT) : 4000;
+const PORT = config.port;
 
 // Create PrismaClient
 const prisma = new PrismaClient();
@@ -78,19 +79,34 @@ server.listen(PORT, async () => {
 
   const base = `http://localhost:${PORT}`;
   const rabbitUi = 'http://localhost:15672';
+  
+  // ANSI color codes
+  const cyan = '\x1b[36m';
+  const reset = '\x1b[0m';
+  
+  // Helper to strip ANSI codes for width calculation
+  const stripAnsi = (str: string): string => {
+    // eslint-disable-next-line no-control-regex
+    return str.replace(/\x1b\[[0-9;]*m/g, '');
+  };
 
   const lines = [
     ' POS Server is running ',
-    ` Base URL   : ${base} `,
-    ` Swagger    : ${base}/api-docs `,
+    ` Base URL   : ${cyan}${base}${reset} `,
+    ` Swagger    : ${cyan}${base}/api-docs${reset} `,
     ` Database   : ${dbConnected ? 'Connected' : 'Not Connected'} `,
     ` RabbitMQ   : ${rabbitConnected ? 'Connected' : 'Not Connected'} `,
-    ` RabbitMQ UI: ${rabbitUi} `
+    ` RabbitMQ UI: ${cyan}${rabbitUi}${reset} `
   ];
-  const width = Math.max(...lines.map(l => l.length)) + 2;
+  // Calculate width without ANSI codes (strip color codes for width calculation)
+  const width = Math.max(...lines.map(l => stripAnsi(l).length)) + 2;
   const top = '┌' + '─'.repeat(width) + '┐';
   const bottom = '└' + '─'.repeat(width) + '┘';
-  const body = lines.map(l => '│ ' + l.padEnd(width - 1, ' ') + '│').join('\n');
+  const body = lines.map(l => {
+    const stripped = stripAnsi(l);
+    const padding = width - 1 - stripped.length;
+    return '│ ' + l + ' '.repeat(padding) + '│';
+  }).join('\n');
   console.log(`\n${top}\n${body}\n${bottom}\n`);
 
   if (!dbConnected) {
@@ -99,7 +115,7 @@ server.listen(PORT, async () => {
   } else {
     // Start automatic sync scheduler (runs every hour)
     syncScheduler.startAutomaticSync();
-    console.log('✅ Automatic sync scheduler started (runs every hour)');
+    // console.log('✅ Automatic sync scheduler started (runs every hour)');
   }
 
   if (!rabbitConnected) {

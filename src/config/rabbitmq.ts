@@ -1,24 +1,19 @@
 import { connect, type Channel, type ChannelModel } from 'amqplib';
-import dotenv from 'dotenv';
+import { config } from './index.js';
 
-dotenv.config();
+const RABBITMQ_URL = config.rabbitmq.url;
+const QUEUE_NAME = config.rabbitmq.queueName;
+const queueType = config.rabbitmq.queueType; // e.g., 'quorum' or 'classic'
 
-const rabbitUrl = process.env.RABBITMQ_URL;
-const queueName = process.env.QUEUE_NAME;
-const queueType = process.env.QUEUE_TYPE; // e.g., 'quorum' or 'classic'
-
-if (!rabbitUrl) {
+if (!RABBITMQ_URL) {
   console.error('❌ RABBITMQ_URL is not set in environment variables.');
   process.exit(1);
 }
 
-if (!queueName) {
+if (!QUEUE_NAME) {
   console.error('❌ QUEUE_NAME is not set in environment variables.');
   process.exit(1);
 }
-
-const RABBITMQ_URL = rabbitUrl;
-const QUEUE_NAME = queueName;
 
 let connection: ChannelModel | null = null;
 let channel: Channel | null = null;
@@ -37,10 +32,10 @@ export async function connectRabbitMQ(): Promise<Channel> {
       // Only set x-queue-type when provided to avoid mismatches
       arguments: queueType ? { 'x-queue-type': queueType } : undefined,
     });
-    console.log(
-      `✅ RabbitMQ connected & queue ready: ${QUEUE_NAME}` +
-        (queueType ? ` (type: ${queueType})` : '')
-    );
+    // console.log(
+    //   `✅ RabbitMQ connected & queue ready: ${QUEUE_NAME}` +
+    //     (queueType ? ` (type: ${queueType})` : '')
+    // );
 
     connection.on('close', () => {
       console.error('❌ RabbitMQ connection closed');

@@ -1,9 +1,8 @@
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
-import { config } from '../config/index.js';
+import { config } from './index.js';
 
-const PORT = config.port || 4000;
-const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
+const baseUrl = config.baseUrl;
 
 /**
  * Swagger/OpenAPI Configuration
@@ -265,3 +264,4 @@ export const swaggerUiOptions = {
 };
 
 export { swaggerUi };
+

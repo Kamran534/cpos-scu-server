@@ -1,12 +1,17 @@
 import { Server as SocketServer } from 'socket.io';
 import { Server as HttpServer } from 'http';
+import { config } from './index.js';
 
 let io: SocketServer | null = null;
 
 export function initSocket(server: HttpServer) {
+  const corsOrigins = config.corsOrigins === '*' 
+    ? '*' 
+    : config.corsOrigins.split(',').map(o => o.trim());
+  
   io = new SocketServer(server, {
     cors: {
-      origin: process.env.CORS_ORIGINS?.split(',') || '*',
+      origin: corsOrigins,
       credentials: true,
     },
   });

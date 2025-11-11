@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
+import { config } from '../config/index.js';
 
 const prisma = new PrismaClient();
 
@@ -22,8 +23,8 @@ export interface AuthRequest extends Request {
   };
 }
 
-const JWT_SECRET: string = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
-const JWT_EXPIRES_IN: string = process.env.JWT_EXPIRES_IN || '24h';
+const JWT_SECRET: string = config.jwtSecret || 'your-secret-key-change-in-production';
+const JWT_EXPIRES_IN: string = config.jwtExpiresIn || '24h';
 
 /**
  * Middleware to verify JWT token and attach user to request

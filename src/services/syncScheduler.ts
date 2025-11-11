@@ -226,7 +226,6 @@ class SyncScheduler {
       ];
 
       // Log table counts for monitoring
-      const { syncService } = await import('./syncService.js');
       const { PrismaClient } = await import('@prisma/client');
       const prisma = new PrismaClient();
 
@@ -234,7 +233,10 @@ class SyncScheduler {
         for (const table of essentialTables) {
           try {
             // Get record count for logging
-            const modelMap: Record<string, any> = {
+            type PrismaModelWithCount = {
+              count: () => Promise<number>;
+            };
+            const modelMap: Record<string, PrismaModelWithCount> = {
               Location: prisma.location,
               Brand: prisma.brand,
               Supplier: prisma.supplier,

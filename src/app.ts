@@ -4,7 +4,7 @@ import helmet from 'helmet';
 import 'dotenv/config';
 
 import { apiRouter } from './routes/index.js';
-import { swaggerUi, swaggerSpec, swaggerUiOptions } from './lib/swagger.js';
+import { swaggerUi, swaggerSpec, swaggerUiOptions } from './config/swagger.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { notFoundHandler } from './middleware/notFoundHandler.js';
 import { coloredLogger } from './middleware/logger.js';
@@ -22,18 +22,26 @@ app.use(coloredLogger);
 void consumeMessages();
 
 app.get('/', (_req: Request, res: Response) => {
-  res.json({ status: 'ok', name: 'pos-server' });
+  res.json({ status: 'ok', name: 'pos-server', message: 'Server is running' });
 });
 
 app.post('/send', async (req: Request, res: Response) => {
-  const { message } = req.body as { message?: string };
+  const { message, payload } = req.body as { message?: string; payload?: unknown };
 
-  if (!message) {
-    return res.status(400).send({ error: 'Message is required' });
+  if (!message && typeof payload === 'undefined') {
+    return res.status(400).send({ error: 'Provide either message or payload' });
   }
 
-  await sendMessage(message);
-  return res.send({ status: 'Message sent', message });
+  const serialized =
+    typeof message === 'string'
+      ? message
+      : JSON.stringify(payload);
+
+  await sendMessage(serialized);
+  return res.send({
+    status: 'Message sent',
+    message: serialized,
+  });
 });
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, swaggerUiOptions));

@@ -3,6 +3,7 @@ import { authRoutes } from './authRoutes.js';
 import { syncRoutes } from './syncRoutes.js';
 import { categoryRoutes } from './categoryRoutes.js';
 import { productRoutes, variantRouter, inventoryRouter } from './productRoutes.js';
+import { config } from '../config/index.js';
 
 export const apiRouter = Router();
 
@@ -41,7 +42,7 @@ apiRouter.get('/health', (_, res) => {
     status: 'ok', 
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
-    environment: process.env.NODE_ENV || 'development',
+    environment: config.nodeEnv,
   });
 });
 

@@ -1,12 +1,12 @@
 import cors from 'cors';
-import { config } from '../config';
+import { config } from '../config/index.js';
 
 /**
  * Get allowed origins from environment variable
  * Supports comma-separated list of origins
  */
 function getAllowedOrigins(): string[] {
-  const corsOrigins = process.env.CORS_ORIGINS || config.corsOrigins || '*';
+  const corsOrigins = config.corsOrigins || '*';
   
   if (corsOrigins === '*') {
     return ['*'];
@@ -39,14 +39,14 @@ const corsOptions: cors.CorsOptions = {
     
     // Allow same-origin requests (for Swagger UI and other same-origin requests)
     // Extract port from origin and check if it matches the server port
-    const serverPort = process.env.PORT ? Number(process.env.PORT) : 4000;
+    const serverPort = config.port;
     const originUrl = new URL(origin);
     if (originUrl.hostname === 'localhost' && Number(originUrl.port) === serverPort) {
       return callback(null, true);
     }
     
     // In development, allow all localhost origins (for Vite, React, etc.)
-    const isDevelopment = process.env.NODE_ENV !== 'production';
+    const isDevelopment = config.nodeEnv !== 'production';
     if (isDevelopment && originUrl.hostname === 'localhost') {
       return callback(null, true);
     }

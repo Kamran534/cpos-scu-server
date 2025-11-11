@@ -2,13 +2,21 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+const port = parseInt(process.env.PORT || '4000', 10);
+
 export const config = {
-  port: parseInt(process.env.PORT || '4000', 10),
+  port,
   nodeEnv: process.env.NODE_ENV || 'development',
   databaseUrl: process.env.DATABASE_URL || '',
+  baseUrl: process.env.BASE_URL || `http://localhost:${port}`,
   corsOrigin: process.env.CORS_ORIGIN || '*', // Deprecated: use CORS_ORIGINS instead
   corsOrigins: process.env.CORS_ORIGINS || process.env.CORS_ORIGIN || '*',
   jwtSecret: process.env.JWT_SECRET || '',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
+  rabbitmq: {
+    url: process.env.RABBITMQ_URL || '',
+    queueName: process.env.QUEUE_NAME || '',
+    queueType: process.env.QUEUE_TYPE || undefined, // Optional: 'quorum' or 'classic'
+  },
 };
 
