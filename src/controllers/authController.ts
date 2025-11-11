@@ -32,15 +32,7 @@ export class AuthController {
    */
   async login(req: AuthRequest, res: Response): Promise<void> {
     try {
-      console.log('[AuthController] Login request received:', {
-        body: req.body,
-        bodyKeys: Object.keys(req.body || {}),
-        contentType: req.headers['content-type'],
-        hasEmail: !!req.body?.email,
-        hasPassword: !!req.body?.password,
-        emailValue: req.body?.email,
-        passwordLength: req.body?.password?.length,
-      });
+      console.log('[AuthController] Login request received');
 
       // Support both 'email' and 'username' for backward compatibility
       const { email, username, password } = req.body;
@@ -48,13 +40,7 @@ export class AuthController {
 
       // Validate email/username and password (check for null, undefined, or empty string)
       if (!loginEmail || (typeof loginEmail === 'string' && loginEmail.trim().length === 0)) {
-        console.error('[AuthController] Missing or empty email/username:', {
-          email: email,
-          username: username,
-          loginEmail: loginEmail,
-          body: req.body,
-          bodyType: typeof req.body,
-        });
+        console.warn('[AuthController] Login failed: Missing or empty email/username');
         res.status(400).json({
           success: false,
           error: 'Email or username is required and cannot be empty',
@@ -63,11 +49,7 @@ export class AuthController {
       }
 
       if (!password || (typeof password === 'string' && password.trim().length === 0)) {
-        console.error('[AuthController] Missing or empty password:', {
-          password: password ? '***' : password,
-          body: req.body,
-          bodyType: typeof req.body,
-        });
+        console.warn('[AuthController] Login failed: Missing or empty password');
         res.status(400).json({
           success: false,
           error: 'Password is required and cannot be empty',

@@ -145,13 +145,17 @@ export class AuthService {
 
   /**
    * Login user
-   * Uses email and password for authentication
+   * Uses email/username and password for authentication
    */
   async login(input: LoginInput) {
-    // Find user by email
-    const user = await prisma.user.findUnique({
+    // Find user by email, username, or employee code
+    const user = await prisma.user.findFirst({
       where: {
-        email: input.email,
+        OR: [
+          { email: input.email },
+          { username: input.email }, // input.email can be username
+          { employeeCode: input.email }, // or employee code
+        ],
       },
       include: {
         role: true,
@@ -159,7 +163,7 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new Error('Invalid email or password');
+      throw new Error('Invalid credentials');
     }
 
     // Check if user is active
@@ -179,7 +183,7 @@ export class AuthService {
     );
 
     if (!isValidPassword) {
-      throw new Error('Invalid email or password');
+      throw new Error('Invalid credentials');
     }
 
     // Generate token

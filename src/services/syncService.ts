@@ -110,9 +110,13 @@ export class SyncService {
 
         if (existing) {
           // Update existing record
+          // Exclude immutable relation ID fields from update
+          const sanitizedData = this.sanitizeData(data, tableName);
+          const updateData = this.removeImmutableFields(sanitizedData, tableName);
+
           await model.update({
             where: { id: record.id },
-            data: this.sanitizeData(data, tableName),
+            data: updateData,
           });
           result.updated++;
         } else {
@@ -392,12 +396,75 @@ export class SyncService {
   }
 
   /**
+   * Remove immutable fields that cannot be updated
+   * These are typically relation ID fields that are part of unique constraints
+   */
+  private removeImmutableFields(data: any, tableName: string): any {
+    const result = { ...data };
+
+    // Define fields that should be excluded from updates for specific tables
+    const immutableFieldsByTable: Record<string, string[]> = {
+      InventoryItem: ['variantId', 'locationId'], // Part of unique constraint
+      UserLocation: ['userId', 'locationId'], // Part of unique constraint
+      StockAdjustmentLine: ['adjustmentId'], // Foreign key
+      StockTransferLine: ['transferId'], // Foreign key
+      OrderLineItem: ['orderId'], // Foreign key
+      OrderPayment: ['orderId'], // Foreign key
+      OrderDiscount: ['orderId'], // Foreign key
+      ReturnLineItem: ['returnId'], // Foreign key
+      ShiftTransaction: ['shiftId'], // Foreign key
+      // Add more tables as needed
+    };
+
+    const fieldsToRemove = immutableFieldsByTable[tableName] || [];
+
+    // Also always remove id, createdAt from updates
+    fieldsToRemove.push('id', 'createdAt');
+
+    for (const field of fieldsToRemove) {
+      delete result[field];
+    }
+
+    // Remove null values from update data to avoid conflicts with non-nullable fields
+    // Prisma will keep existing values for fields not included in the update
+    Object.keys(result).forEach(key => {
+      if (result[key] === null || result[key] === undefined) {
+        delete result[key];
+      }
+    });
+
+    return result;
+  }
+
+  /**
    * Sanitize data for Prisma (convert types, handle relationships)
    */
   private sanitizeData(data: any, tableName: string): any {
     // First convert snake_case keys to camelCase (SQLite uses snake_case, Prisma uses camelCase)
     const camelCaseData = this.convertKeysToCamelCase(data);
     const sanitized: any = { ...camelCaseData };
+
+    // FIRST: Convert integer boolean values (0/1) to actual booleans
+    // This must happen BEFORE decimal conversion to avoid conflicts
+    // SQLite stores booleans as integers (0 or 1), but Prisma expects true booleans
+    for (const key in sanitized) {
+      if (typeof sanitized[key] === 'number' && (sanitized[key] === 0 || sanitized[key] === 1)) {
+        // Check if this field is a boolean field by naming convention
+        const keyLower = key.toLowerCase();
+        const booleanFieldPrefixes = ['is', 'has', 'track', 'allow', 'enable', 'require', 'show'];
+        const booleanFieldSuffixes = ['taxable', 'active', 'deleted', 'enabled', 'required', 'available', 'visible'];
+
+        const isBooleanField = booleanFieldPrefixes.some(prefix =>
+          keyLower.startsWith(prefix)
+        ) || booleanFieldSuffixes.some(suffix =>
+          keyLower.endsWith(suffix)
+        );
+
+        if (isBooleanField) {
+          sanitized[key] = sanitized[key] === 1;
+        }
+      }
+    }
 
     // Define fields that are Decimal types (price, cost, weight, etc.)
     const decimalFields = [
@@ -407,15 +474,18 @@ export class SyncService {
       'openingBalance', 'closingBalance', 'depositAmount', 'withdrawalAmount'
     ];
 
-    // First, handle Decimal fields (convert strings to numbers)
+    // Handle Decimal fields (convert strings to numbers)
     for (const key in sanitized) {
       if (decimalFields.some(field => key.toLowerCase().includes(field.toLowerCase()))) {
         if (sanitized[key] !== null && sanitized[key] !== undefined) {
           if (typeof sanitized[key] === 'string') {
             const num = parseFloat(sanitized[key]);
             sanitized[key] = isNaN(num) ? null : num;
-          } else if (typeof sanitized[key] === 'number') {
-            // Already a number, keep as is
+          } else if (typeof sanitized[key] === 'number' && sanitized[key] !== 0 && sanitized[key] !== 1) {
+            // Already a number (but not a boolean), keep as is
+          } else if (typeof sanitized[key] === 'boolean') {
+            // Skip booleans that were already converted
+            continue;
           } else {
             // Invalid type for decimal, set to null
             sanitized[key] = null;
@@ -424,8 +494,13 @@ export class SyncService {
       }
     }
 
-    // Convert date strings to Date objects (but skip fields that are Decimal)
+    // Convert date strings to Date objects (but skip fields that are Decimal or Boolean)
     for (const key in sanitized) {
+      // Skip if boolean
+      if (typeof sanitized[key] === 'boolean') {
+        continue;
+      }
+
       // Skip if already handled as decimal field
       if (decimalFields.some(field => key.toLowerCase().includes(field.toLowerCase()))) {
         continue;
@@ -444,14 +519,6 @@ export class SyncService {
         } catch {
           // Invalid date, keep as is
         }
-      }
-
-      // Convert boolean-like values
-      if (
-        typeof sanitized[key] === 'number' &&
-        (key.includes('is') || key.includes('has') || key.includes('track'))
-      ) {
-        sanitized[key] = Boolean(sanitized[key]);
       }
 
       // Handle JSON fields - parse JSON strings to objects/arrays
