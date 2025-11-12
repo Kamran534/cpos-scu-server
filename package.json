@@ -20,7 +20,14 @@
     "prisma:studio": "prisma studio",
     "prisma:format": "prisma format",
     "prisma:validate": "prisma validate",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "sync:tu": "tsx src/scripts/sync-tradeunleashed.ts",
+    "sync:tu:test": "tsx src/scripts/sync-tradeunleashed.ts -- --test",
+    "example:tu": "tsx src/examples/tradeunleashed-sync-with-config.example.ts",
+    "example:interface": "tsx src/examples/interface-pattern.example.ts",
+    "example:queue": "tsx src/examples/rabbitmq-sync.example.ts",
+    "worker:sync": "tsx src/scripts/start-sync-worker.ts",
+    "test:tu-connection": "tsx src/scripts/test-tradeunleashed-connection.ts"
   },
   "keywords": [
     "pos",

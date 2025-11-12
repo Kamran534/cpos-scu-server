@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { authRoutes } from './authRoutes.js';
 import { syncRoutes } from './syncRoutes.js';
+import syncQueueRoutes from './syncQueueRoutes.js';
 import { categoryRoutes } from './categoryRoutes.js';
 import { productRoutes, variantRouter, inventoryRouter } from './productRoutes.js';
 import { config } from '../config/index.js';
@@ -91,6 +92,7 @@ apiRouter.get('/', (_, res) => {
 // API Routes
 apiRouter.use('/auth', authRoutes);
 apiRouter.use('/sync', syncRoutes);
+apiRouter.use('/sync/queue', syncQueueRoutes); // Queue-based async sync
 apiRouter.use('/categories', categoryRoutes);
 apiRouter.use('/products', productRoutes);
 apiRouter.use('/variants', variantRouter);

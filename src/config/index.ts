@@ -18,5 +18,11 @@ export const config = {
     queueName: process.env.QUEUE_NAME || '',
     queueType: process.env.QUEUE_TYPE || undefined, // Optional: 'quorum' or 'classic'
   },
+  // TradeUnleashed Integration
+  tradeUnleashed: {
+    baseUrl: process.env.TRADEUNLEASHED_BASE_URL || 'https://q-prod.tradeunleashed.com',
+    username: process.env.TRADEUNLEASHED_USERNAME || '03008420717',
+    password: process.env.TRADEUNLEASHED_PASSWORD || 'Xaxu@pk00!',
+  },
 };
 
