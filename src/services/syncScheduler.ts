@@ -2,12 +2,14 @@
  * Sync Scheduler
  * 
  * Handles automatic synchronization on the server side
- * - Runs sync every hour automatically
+ * - Runs sync every hour automatically (calls integration layer APIs)
  * - Can be triggered manually
  * - Syncs on user login
  */
 
 import cron from 'node-cron';
+import { SyncQueueService } from './SyncQueueService.js';
+import { config } from '../config/index.js';
 
 export interface SyncResult {
   success: boolean;
@@ -24,9 +26,14 @@ class SyncScheduler {
   private isRunning: boolean = false;
   private lastSyncTime: Date | null = null;
   private syncHistory: SyncResult[] = [];
+  private syncQueue: SyncQueueService;
+
+  constructor() {
+    this.syncQueue = new SyncQueueService();
+  }
 
   /**
-   * Start automatic sync (runs every hour)
+   * Start automatic sync (schedule from environment variable)
    */
   startAutomaticSync(): void {
     if (this.cronJob) {
@@ -34,13 +41,23 @@ class SyncScheduler {
       return;
     }
 
-    // Run sync every hour at minute 0 (e.g., 1:00, 2:00, 3:00, etc.)
-    this.cronJob = cron.schedule('0 * * * *', async () => {
-      console.log('[SyncScheduler] Running automatic hourly sync...');
-      await this.performSync();
+    const cronSchedule = config.sync.cronSchedule;
+
+    // Validate cron expression
+    if (!cron.validate(cronSchedule)) {
+      console.error(`[SyncScheduler] ❌ Invalid cron schedule: "${cronSchedule}"`);
+      console.error('[SyncScheduler] Please check SYNC_CRON_SCHEDULE in your .env file');
+      return;
+    }
+
+    // Run sync based on cron schedule from environment variable
+    this.cronJob = cron.schedule(cronSchedule, async () => {
+      console.log('[SyncScheduler] ⏰ Running automatic sync...');
+      await this.performIntegrationSync();
     });
 
-    console.log('[SyncScheduler] Automatic sync started (runs every hour)');
+    console.log(`[SyncScheduler] Automatic sync started (schedule: ${cronSchedule})`);
+    console.log('[SyncScheduler] Calls integration APIs to fetch data from platform');
   }
 
   /**
@@ -51,6 +68,122 @@ class SyncScheduler {
       this.cronJob.stop();
       this.cronJob = null;
       console.log('[SyncScheduler] Automatic sync stopped');
+    }
+  }
+
+  /**
+   * Perform integration layer sync
+   * Calls platform APIs (TradeUnleashed, etc.) and queues jobs for processing
+   */
+  async performIntegrationSync(): Promise<void> {
+    if (this.isRunning) {
+      console.log('[SyncScheduler] ⚠️  Sync already in progress, skipping...');
+      return;
+    }
+
+    this.isRunning = true;
+    const startTime = new Date();
+
+    try {
+      console.log('[SyncScheduler] 🚀 Starting integration layer sync...');
+      console.log('[SyncScheduler] Queuing jobs to fetch data from platform APIs...');
+
+      // Queue product sync job (calls TradeUnleashed API → Worker processes → saves to DB)
+      console.log('[SyncScheduler] → Queuing product sync job...');
+      const productJob = await this.syncQueue.queueProductSync('tradeunleashed', {
+        fullSync: false, // Incremental sync
+        fromDate: this.lastSyncTime || new Date(Date.now() - 3600000), // Last sync or 1 hour ago
+        batchSize: 100,
+      });
+      console.log(`[SyncScheduler] ✓ Product sync job queued: ${productJob.jobId}`);
+
+      // Queue order sync job
+      console.log('[SyncScheduler] → Queuing order sync job...');
+      const orderJob = await this.syncQueue.queueOrderSync('tradeunleashed', {
+        fullSync: false,
+        fromDate: this.lastSyncTime || new Date(Date.now() - 3600000),
+      });
+      console.log(`[SyncScheduler] ✓ Order sync job queued: ${orderJob.jobId}`);
+
+      // Queue customer sync job
+      console.log('[SyncScheduler] → Queuing customer sync job...');
+      const customerJob = await this.syncQueue.queueCustomerSync('tradeunleashed', {
+        fullSync: false,
+        fromDate: this.lastSyncTime || new Date(Date.now() - 3600000),
+      });
+      console.log(`[SyncScheduler] ✓ Customer sync job queued: ${customerJob.jobId}`);
+
+      const endTime = new Date();
+      const duration = endTime.getTime() - startTime.getTime();
+
+      this.lastSyncTime = endTime;
+
+      console.log(`[SyncScheduler] ✅ Integration sync jobs queued successfully (${duration}ms)`);
+      console.log(`[SyncScheduler] 📋 Jobs: ${productJob.jobId}, ${orderJob.jobId}, ${customerJob.jobId}`);
+      console.log(`[SyncScheduler] ⏳ Jobs will be processed by SyncWorker in background`);
+    } catch (error) {
+      console.error('[SyncScheduler] ❌ Failed to queue integration sync jobs:', error);
+    } finally {
+      this.isRunning = false;
+    }
+  }
+
+  /**
+   * Trigger manual integration sync
+   * Same as automatic sync but triggered via API
+   */
+  async triggerManualIntegrationSync(): Promise<{
+    success: boolean;
+    message: string;
+    jobs?: { productJob: string; orderJob: string; customerJob: string };
+  }> {
+    try {
+      console.log('[SyncScheduler] 📱 Manual integration sync triggered');
+      
+      if (this.isRunning) {
+        return {
+          success: false,
+          message: 'Sync already in progress',
+        };
+      }
+
+      this.isRunning = true;
+
+      // Queue jobs with full sync
+      const productJob = await this.syncQueue.queueProductSync('tradeunleashed', {
+        fullSync: true, // Full sync for manual trigger
+        batchSize: 100,
+      });
+
+      const orderJob = await this.syncQueue.queueOrderSync('tradeunleashed', {
+        fullSync: true,
+      });
+
+      const customerJob = await this.syncQueue.queueCustomerSync('tradeunleashed', {
+        fullSync: true,
+      });
+
+      this.lastSyncTime = new Date();
+      this.isRunning = false;
+
+      console.log('[SyncScheduler] ✅ Manual sync jobs queued successfully');
+
+      return {
+        success: true,
+        message: 'Integration sync jobs queued successfully',
+        jobs: {
+          productJob: productJob.jobId,
+          orderJob: orderJob.jobId,
+          customerJob: customerJob.jobId,
+        },
+      };
+    } catch (error) {
+      this.isRunning = false;
+      console.error('[SyncScheduler] ❌ Manual sync failed:', error);
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Unknown error',
+      };
     }
   }
 

@@ -10,7 +10,7 @@ import {
   queueOrderSync,
   queueCustomerSync,
   getQueueStats,
-} from '../controllers/syncQueueController';
+} from '../controllers/syncQueueController.js';
 
 const router = Router();
 

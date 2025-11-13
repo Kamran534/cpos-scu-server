@@ -5,9 +5,9 @@
  * Provides non-blocking sync operations
  */
 
-import { connectRabbitMQ } from '../config/rabbitmq';
-import { ISyncOptions } from '../core/interfaces/IIntegrationService';
-import { SyncJobMessage, QueuedJobResponse, QueueNames } from '../types/queue.types';
+import { connectRabbitMQ } from '../config/rabbitmq.js';
+import { ISyncOptions } from '../core/interfaces/IIntegrationService.js';
+import { SyncJobMessage, QueuedJobResponse, QueueNames } from '../types/queue.types.js';
 
 export class SyncQueueService {
   private queueName = QueueNames.SYNC_JOBS;

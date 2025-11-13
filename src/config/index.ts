@@ -18,6 +18,10 @@ export const config = {
     queueName: process.env.QUEUE_NAME || '',
     queueType: process.env.QUEUE_TYPE || undefined, // Optional: 'quorum' or 'classic'
   },
+  // Sync Scheduler Configuration
+  sync: {
+    cronSchedule: process.env.SYNC_CRON_SCHEDULE || '0 * * * *', // Default: every hour at minute 0
+  },
   // TradeUnleashed Integration
   tradeUnleashed: {
     baseUrl: process.env.TRADEUNLEASHED_BASE_URL || 'https://q-prod.tradeunleashed.com',

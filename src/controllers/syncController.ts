@@ -254,6 +254,42 @@ export class SyncController {
       });
     }
   }
+
+  /**
+   * Trigger manual integration layer sync
+   * Calls platform APIs (TradeUnleashed, etc.) to fetch data
+   * POST /api/sync/integration/trigger
+   */
+  async triggerIntegrationSync(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      console.log('[SyncController] 🚀 Manual integration sync triggered by user:', req.user?.username);
+      
+      const result = await syncScheduler.triggerManualIntegrationSync();
+
+      if (result.success) {
+        res.status(202).json({
+          success: true,
+          message: result.message,
+          data: {
+            startedAt: new Date().toISOString(),
+            jobs: result.jobs,
+            note: 'Jobs queued successfully. Worker will process them in background.',
+          },
+        });
+      } else {
+        res.status(400).json({
+          success: false,
+          error: result.message,
+        });
+      }
+    } catch (error) {
+      console.error('[SyncController] Integration sync error:', error);
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to trigger integration sync',
+      });
+    }
+  }
 }
 
 export const syncController = new SyncController();

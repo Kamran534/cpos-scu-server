@@ -5,12 +5,12 @@
  * Generic layer only knows about IIntegrationService, not this specific implementation
  */
 
-import { IIntegrationService, ISyncOptions } from '../../core/interfaces/IIntegrationService';
-import { ProductBatchPayload, OrderBatchPayload, CustomerBatchPayload } from '../../payloads';
-import { TradeUnleashedConfig } from './types';
-import { TradeUnleashedClient } from './api/TradeUnleashedClient';
-import { TradeUnleashedProductService } from './services/TradeUnleashedProductService';
-import { TradeUnleashedOrderService } from './services/TradeUnleashedOrderService';
+import { IIntegrationService, ISyncOptions } from '../../core/interfaces/IIntegrationService.js';
+import { ProductBatchPayload, OrderBatchPayload, CustomerBatchPayload } from '../../payloads/index.js';
+import { TradeUnleashedConfig } from './types.js';
+import { TradeUnleashedClient } from './api/TradeUnleashedClient.js';
+import { TradeUnleashedProductService } from './services/TradeUnleashedProductService.js';
+import { TradeUnleashedOrderService } from './services/TradeUnleashedOrderService.js';
 
 export class TradeUnleashedIntegration implements IIntegrationService {
   public readonly name = 'tradeunleashed';

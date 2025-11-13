@@ -562,3 +562,54 @@ syncRoutes.post('/manual', authenticate, (req, res) => {
   syncController.triggerManualSync(req as any, res);
 });
 
+/**
+ * @swagger
+ * /api/sync/integration/trigger:
+ *   post:
+ *     summary: Trigger integration layer sync
+ *     description: Manually triggers sync with external platform APIs (TradeUnleashed, etc.). Queues jobs to fetch products, orders, and customers from the platform and save to database.
+ *     tags: [Sync]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       202:
+ *         description: Integration sync jobs queued successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Integration sync jobs queued successfully"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     startedAt:
+ *                       type: string
+ *                       format: date-time
+ *                     jobs:
+ *                       type: object
+ *                       properties:
+ *                         productJob:
+ *                           type: string
+ *                         orderJob:
+ *                           type: string
+ *                         customerJob:
+ *                           type: string
+ *                     note:
+ *                       type: string
+ *       400:
+ *         description: Sync already in progress
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+syncRoutes.post('/integration/trigger', authenticate, (req, res) => {
+  syncController.triggerIntegrationSync(req as any, res);
+});
+

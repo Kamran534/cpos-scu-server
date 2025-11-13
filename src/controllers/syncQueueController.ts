@@ -6,8 +6,8 @@
  */
 
 import { Response } from 'express';
-import { AuthRequest } from '../middleware/auth';
-import { SyncQueueService } from '../services/SyncQueueService';
+import { AuthRequest } from '../middleware/auth.js';
+import { SyncQueueService } from '../services/SyncQueueService.js';
 
 const syncQueue = new SyncQueueService();
 

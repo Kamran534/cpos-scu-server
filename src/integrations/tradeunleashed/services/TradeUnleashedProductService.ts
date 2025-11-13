@@ -6,15 +6,15 @@
  * NO DB access, NO business logic
  */
 
-import { TradeUnleashedClient } from '../api/TradeUnleashedClient';
-import { TradeUnleashedConfig, TradeUnleashedStockQueryParams } from '../types';
+import { TradeUnleashedClient } from '../api/TradeUnleashedClient.js';
+import { TradeUnleashedConfig, TradeUnleashedStockQueryParams } from '../types.js';
 import { 
   ProductPayload, 
   ProductVariantPayload, 
   InventoryItemPayload,
   ProductBatchPayload 
-} from '../../../payloads';
-import { normalizeStockItems, NormalizedStockItem } from '../mappers';
+} from '../../../payloads/index.js';
+import { normalizeStockItems, NormalizedStockItem } from '../mappers/index.js';
 
 export class TradeUnleashedProductService {
   private client: TradeUnleashedClient;

@@ -409,20 +409,12 @@ pos-server/
 │   ├── rabbit/
 │   │   ├── producer.ts
 │   │   └── consumer.ts
-│   ├── scripts/
-│   │   ├── start-sync-worker.ts      # Worker startup
-│   │   └── sync-tradeunleashed.ts
-│   └── examples/
-│       ├── interface-pattern.example.ts
-│       ├── rabbitmq-sync.example.ts
-│       └── tradeunleashed-sync.example.ts
-├── docs/                             # Documentation
-│   ├── PAYLOAD-ARCHITECTURE.md
-│   ├── INTERFACE-PATTERN.md
-│   ├── RABBITMQ-SETUP.md
-│   ├── RABBITMQ-QUICK-START.md
-│   ├── SETUP-GUIDE.md
-│   └── QUICK-START.md
+│   └── scripts/
+│       ├── start-sync-worker.ts      # Worker startup
+│       └── sync-tradeunleashed.ts
+├── assets/                           # Static assets
+│   └── images/
+│       └── categories/               # Category images
 ├── .env                              # Environment variables
 ├── .env.example                      # Environment template
 ├── package.json
@@ -487,6 +479,14 @@ JWT_EXPIRATION=7d
 RABBITMQ_URL=amqp://localhost:5672
 QUEUE_NAME=pos-sync-jobs
 QUEUE_TYPE=quorum
+
+# Sync Scheduler
+SYNC_CRON_SCHEDULE=0 * * * *    # Cron expression for automatic sync (default: every hour)
+                                # Examples:
+                                # - 0 * * * *     (every hour at minute 0)
+                                # - */30 * * * *  (every 30 minutes)
+                                # - 0 */2 * * *   (every 2 hours)
+                                # - 0 9-17 * * *  (every hour from 9 AM to 5 PM)
 
 # TradeUnleashed Integration
 TRADEUNLEASHED_BASE_URL=https://q-prod.tradeunleashed.com
@@ -595,14 +595,18 @@ export const config = {
 ### Development Mode
 
 ```bash
-# Start API server with hot reload
+# Start API server with hot reload (worker starts automatically)
 npm run dev
-
-# In another terminal, start the sync worker
-npm run worker:sync
 ```
 
-The server will start on `http://localhost:4000`
+The server will start on `http://localhost:4000` and the Sync Worker will automatically start processing jobs from RabbitMQ.
+
+**Output**:
+```
+✅ Server running on port 4000
+✅ Automatic sync scheduler started (runs every hour)
+✅ Sync Worker started (processes integration layer jobs from queue)
+```
 
 ### Production Mode
 
@@ -610,12 +614,11 @@ The server will start on `http://localhost:4000`
 # Build TypeScript
 npm run build
 
-# Start production server
+# Start production server (worker starts automatically)
 npm start
-
-# Start worker (in another process/container)
-npm run worker:sync
 ```
+
+**Note**: The Sync Worker is now integrated with the server and starts automatically. You can still run it separately using `npm run worker:sync` if needed for scaling or testing.
 
 ### Using PM2 (Production Process Manager)
 
@@ -623,17 +626,18 @@ npm run worker:sync
 # Install PM2 globally
 npm install -g pm2
 
-# Start server
+# Start server (worker starts automatically)
 pm2 start npm --name "pos-server" -- start
 
-# Start worker
-pm2 start npm --name "pos-worker" -- run worker:sync
-
 # View logs
-pm2 logs
+pm2 logs pos-server
 
 # Monitor
 pm2 monit
+
+# Optional: Run additional worker instances for horizontal scaling
+pm2 start npm --name "pos-worker-2" -- run worker:sync
+pm2 start npm --name "pos-worker-3" -- run worker:sync
 ```
 
 ### Docker Compose (Full Stack)
@@ -710,6 +714,15 @@ POST   /api/sync/queue/customers   # Queue customer sync
 GET    /api/sync/queue/stats       # Get queue statistics
 ```
 
+#### Integration Layer Sync (Automatic & Manual)
+
+```http
+POST   /api/sync/integration/trigger    # Manually trigger full integration sync
+                                         # (Products, Orders, Customers from platform APIs)
+```
+
+**Note**: Integration sync runs automatically based on the configured cron schedule (default: every hour). Use this endpoint for manual full sync.
+
 ### Example API Requests
 
 #### Queue Product Sync
@@ -773,14 +786,36 @@ API Request → SyncQueueService → RabbitMQ → SyncWorker → Database
 
 ### Starting the Worker
 
+**Option 1: Automatic (Recommended)**
+
+The Sync Worker starts automatically when you run the server:
+
 ```bash
-# Terminal 1: Start the worker
+npm start
+
+# Output includes:
+# ✅ Server running on port 4000
+# ✅ Automatic sync scheduler started (runs every hour)
+# ✅ Sync Worker started (processes integration layer jobs from queue)
+```
+
+**Option 2: Manual (Separate Process)**
+
+You can also run the worker separately:
+
+```bash
+# Terminal 1: Start the server
+npm start
+
+# Terminal 2: Start the worker separately
 npm run worker:sync
 
 # Output:
 # [SyncWorker] 🚀 Started and waiting for sync jobs...
 # [SyncWorker] Queue: sync-jobs
 ```
+
+**Note**: The worker will gracefully shutdown when you stop the server (Ctrl+C).
 
 ### Queueing Jobs
 
@@ -798,13 +833,6 @@ const syncQueue = new SyncQueueService();
 await syncQueue.queueProductSync('tradeunleashed', { fullSync: true });
 ```
 
-**Option 3: Run Examples**
-```bash
-npm run example:queue 1  # Queue product sync
-npm run example:queue 2  # Incremental sync
-npm run example:queue 3  # Multiple jobs
-```
-
 ### Monitoring
 
 **RabbitMQ Management UI**: http://localhost:15672
@@ -813,11 +841,72 @@ npm run example:queue 3  # Multiple jobs
 
 **Queue Stats API**: `GET /api/sync/queue/stats`
 
-### Documentation
+### Automatic Sync Scheduler
 
-- **Complete Guide**: [RABBITMQ-SETUP.md](./RABBITMQ-SETUP.md)
-- **Quick Start**: [RABBITMQ-QUICK-START.md](./RABBITMQ-QUICK-START.md)
-- **Architecture**: [RABBITMQ-INTEGRATION-SUMMARY.md](./RABBITMQ-INTEGRATION-SUMMARY.md)
+The server includes an **automatic sync** that runs in the background based on a configurable cron schedule:
+
+```
+✅ Automatic sync scheduler started (schedule: 0 * * * *)
+✅ Sync Worker started (processes integration layer jobs from queue)
+```
+
+**Configuration**:
+
+The sync schedule is configured via the `SYNC_CRON_SCHEDULE` environment variable:
+
+```bash
+# In your .env file
+SYNC_CRON_SCHEDULE=0 * * * *    # Every hour at minute 0 (default)
+# SYNC_CRON_SCHEDULE=*/30 * * * *  # Every 30 minutes
+# SYNC_CRON_SCHEDULE=0 */2 * * *   # Every 2 hours
+# SYNC_CRON_SCHEDULE=0 9-17 * * *  # Every hour from 9 AM to 5 PM
+```
+
+**Common Cron Patterns**:
+- `0 * * * *` - Every hour at minute 0 (default)
+- `*/30 * * * *` - Every 30 minutes
+- `0 */2 * * *` - Every 2 hours
+- `0 0 * * *` - Once a day at midnight
+- `0 9-17 * * *` - Every hour between 9 AM and 5 PM
+- `0 0 * * 1` - Every Monday at midnight
+
+**How it works**:
+1. Server starts and initializes the sync scheduler with the configured cron schedule
+2. Based on the schedule, the scheduler automatically queues sync jobs for products, orders, and customers
+3. Jobs are sent to RabbitMQ and processed by the Sync Worker in the background
+4. Data is fetched from platform APIs (TradeUnleashed, etc.) and saved to PostgreSQL
+
+**Manual Trigger**:
+```bash
+# Trigger full sync manually via API
+curl -X POST http://localhost:4000/api/sync/integration/trigger \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+Response:
+```json
+{
+  "success": true,
+  "message": "Integration sync jobs queued successfully",
+  "data": {
+    "startedAt": "2025-11-13T10:00:00.000Z",
+    "jobs": {
+      "productJob": "tradeunleashed-sync.products-1731492000000",
+      "orderJob": "tradeunleashed-sync.orders-1731492000000",
+      "customerJob": "tradeunleashed-sync.customers-1731492000000"
+    },
+    "note": "Jobs queued successfully. Worker will process them in background."
+  }
+}
+```
+
+### Best Practices
+
+- **Idempotency**: Jobs should be safe to retry
+- **Validation**: Validate input before queuing
+- **Monitoring**: Monitor queue depth and consumer health
+- **Error Handling**: Use dead letter queues for failed messages
+- **Logging**: Log job start, completion, and errors
 
 ---
 
@@ -920,11 +1009,6 @@ Raw API Response → POJO Mapper → Normalized Data → Payload Builder → Gen
 - Calculates derived fields
 - Validates data structure
 
-### Documentation
-
-- **Interface Pattern**: [INTERFACE-PATTERN.md](./INTERFACE-PATTERN.md)
-- **Quick Start**: [INTERFACE-QUICK-START.md](./INTERFACE-QUICK-START.md)
-
 ---
 
 ## 📦 Payload Architecture
@@ -978,9 +1062,13 @@ ProductPayloadProcessor validates & processes
 ProductRepository saves to database
 ```
 
-### Documentation
+### Benefits
 
-- **Complete Guide**: [PAYLOAD-ARCHITECTURE.md](./PAYLOAD-ARCHITECTURE.md)
+- **Decoupling**: Integration layer doesn't need to know database structure
+- **Flexibility**: Easy to change database schema without touching integrations
+- **Validation**: Centralized validation in payload processors
+- **Type Safety**: Full TypeScript types for all payloads
+- **Testability**: Easy to mock and test with payload objects
 
 ---
 
@@ -1294,11 +1382,8 @@ npm run prisma:studio      # Open database GUI
 npm run prisma:push        # Push schema to DB
 npm run prisma:reset       # Reset database
 
-# Sync & Examples
+# Sync
 npm run sync:tu            # Direct TradeUnleashed sync
-npm run example:tu         # TradeUnleashed example
-npm run example:interface  # Interface pattern examples
-npm run example:queue      # RabbitMQ queue examples
 
 # Linting & Type Checking
 npm run lint               # Run ESLint
@@ -1343,14 +1428,13 @@ npm run test:integration
 ### Manual Testing
 
 ```bash
-# Test queue system
-npm run example:queue 1
-
-# Test interface pattern
-npm run example:interface 1
-
 # Test TradeUnleashed sync
-npm run example:tu
+npm run sync:tu
+
+# Test via API endpoints
+curl -X POST http://localhost:4000/api/sync/queue/products \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{"integration":"tradeunleashed","fullSync":true}'
 ```
 
 ### API Testing
@@ -1415,13 +1499,18 @@ docker run -p 4000:4000 pos-server
 module.exports = {
   apps: [
     {
-      name: 'pos-api',
+      name: 'pos-server',
       script: 'dist/server.js',
       instances: 2,
       exec_mode: 'cluster',
+      env: {
+        NODE_ENV: 'production',
+        PORT: 4000,
+      },
     },
+    // Optional: Additional worker instances for horizontal scaling
     {
-      name: 'pos-worker',
+      name: 'pos-worker-extra',
       script: 'dist/scripts/start-sync-worker.js',
       instances: 1,
     },
@@ -1430,7 +1519,15 @@ module.exports = {
 
 # Deploy
 pm2 start ecosystem.config.js
+
+# View logs
+pm2 logs
+
+# Monitor all processes
+pm2 monit
 ```
+
+**Note**: The server now includes an integrated worker, so you only need one `pos-server` instance. Additional worker instances are optional for increased throughput.
 
 ### Cloud Deployment
 
@@ -1452,25 +1549,18 @@ git push heroku main
 
 ## 📖 Documentation
 
-### Core Documentation
-
-- **[SETUP-GUIDE.md](./SETUP-GUIDE.md)** - Detailed setup instructions
-- **[QUICK-START.md](./QUICK-START.md)** - Get started quickly
-- **[PAYLOAD-ARCHITECTURE.md](./PAYLOAD-ARCHITECTURE.md)** - Payload system design
-- **[INTERFACE-PATTERN.md](./INTERFACE-PATTERN.md)** - Interface pattern guide
-- **[INTERFACE-QUICK-START.md](./INTERFACE-QUICK-START.md)** - Interface quick start
-
-### RabbitMQ Documentation
-
-- **[RABBITMQ-SETUP.md](./RABBITMQ-SETUP.md)** - Complete RabbitMQ setup
-- **[RABBITMQ-QUICK-START.md](./RABBITMQ-QUICK-START.md)** - RabbitMQ quick reference
-- **[RABBITMQ-INTEGRATION-SUMMARY.md](./RABBITMQ-INTEGRATION-SUMMARY.md)** - Architecture details
-- **[README-RABBITMQ.md](./README-RABBITMQ.md)** - RabbitMQ getting started
-
 ### API Documentation
 
 - **Swagger UI**: http://localhost:4000/api-docs
 - **OpenAPI Spec**: http://localhost:4000/api-docs.json
+
+### Architecture Diagrams
+
+All architecture diagrams and flowcharts are included in this README above:
+- High-Level System Architecture
+- Layered Architecture Detail
+- RabbitMQ Message Flow
+- Interface Pattern Design
 
 ---
 
@@ -1560,6 +1650,16 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ### 🎉 Recent Achievements
 
+**Automatic Integration Sync - Fully Implemented**
+- ✅ Sync Worker now starts automatically with the server
+- ✅ Configurable automatic sync scheduler via environment variable (`SYNC_CRON_SCHEDULE`)
+- ✅ Manual API trigger endpoint for on-demand full syncs (`/api/sync/integration/trigger`)
+- ✅ Graceful shutdown handling for worker processes
+- ✅ Integration layer calls platform APIs based on cron schedule
+- ✅ Jobs queued to RabbitMQ and processed in background
+- ✅ Server startup shows all services status (Server, Scheduler, Worker)
+- ✅ Cron schedule validation with helpful error messages
+
 **TradeUnleashed Integration - Fully Operational**
 - ✅ Successfully synced 444 records (149 products + 149 variants + 146 inventory)
 - ✅ POJO mapper handles CSV-like API responses
@@ -1575,6 +1675,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - ✅ Payload-based communication proven effective
 - ✅ Repository pattern cleanly abstracts database operations
 - ✅ Type safety enforced throughout the stack
+- ✅ All documentation consolidated into single comprehensive README
 
 **Performance Metrics**
 - Sync Time: ~5 minutes for 149 products (first run)
@@ -1582,6 +1683,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Success Rate: 98.6% (442/448 items, 4 validation errors expected)
 - Database Connections: Stable with auto-recovery
 - Worker Throughput: ~30 items/minute
+- Automatic Sync: Runs based on configurable schedule (default: every hour)
 
 ---
 

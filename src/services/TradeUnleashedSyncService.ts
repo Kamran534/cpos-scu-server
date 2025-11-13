@@ -13,9 +13,9 @@ import {
   TradeUnleashedProductService,
   TradeUnleashedAuthService,
   TradeUnleashedConfig 
-} from '../integrations/tradeunleashed';
-import { ProductPayloadProcessor } from '../core/processors';
-import { ProductBatchPayload } from '../payloads';
+} from '../integrations/tradeunleashed/index.js';
+import { ProductPayloadProcessor } from '../core/processors/index.js';
+import { ProductBatchPayload } from '../payloads/index.js';
 
 export interface SyncOptions {
   facilityIds?: string[];

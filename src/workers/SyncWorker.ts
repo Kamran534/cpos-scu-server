@@ -7,12 +7,12 @@
 
 import type { ConsumeMessage, Channel } from 'amqplib';
 import { PrismaClient } from '@prisma/client';
-import { connectRabbitMQ } from '../config/rabbitmq';
-import { IntegrationOrchestrator } from '../core/services/IntegrationOrchestrator';
-import { TradeUnleashedIntegration } from '../integrations/tradeunleashed/TradeUnleashedIntegration';
-import { SyncJobMessage, SyncJobResult, QueueNames } from '../types/queue.types';
-import { IIntegrationService } from '../core/interfaces/IIntegrationService';
-import { config } from '../config';
+import { connectRabbitMQ } from '../config/rabbitmq.js';
+import { IntegrationOrchestrator } from '../core/services/IntegrationOrchestrator.js';
+import { TradeUnleashedIntegration } from '../integrations/tradeunleashed/TradeUnleashedIntegration.js';
+import { SyncJobMessage, SyncJobResult, QueueNames } from '../types/queue.types.js';
+import { IIntegrationService, ISyncOptions } from '../core/interfaces/IIntegrationService.js';
+import { config } from '../config/index.js';
 
 export class SyncWorker {
   private prisma: PrismaClient;
@@ -92,6 +92,9 @@ export class SyncWorker {
       console.log(`[SyncWorker] Processing ${type} for ${integration} (Job: ${jobId})`);
       console.log(`[SyncWorker] Options:`, JSON.stringify(options, null, 2));
 
+      // Convert date strings back to Date objects (they were serialized to JSON)
+      const processedOptions = this.deserializeSyncOptions(options);
+
       // Create integration service
       const integrationService = this.createIntegrationService(integration);
 
@@ -103,13 +106,13 @@ export class SyncWorker {
       let result;
       switch (type) {
         case 'sync.products':
-          result = await orchestrator.syncProducts(options);
+          result = await orchestrator.syncProducts(processedOptions);
           break;
         case 'sync.orders':
-          result = await orchestrator.syncOrders(options);
+          result = await orchestrator.syncOrders(processedOptions);
           break;
         case 'sync.customers':
-          result = await orchestrator.syncCustomers(options);
+          result = await orchestrator.syncCustomers(processedOptions);
           break;
         default:
           throw new Error(`Unknown sync type: ${type}`);
@@ -162,6 +165,27 @@ export class SyncWorker {
       // Reject message (will be requeued or sent to DLQ)
       channel.nack(msg, false, false);
     }
+  }
+
+  /**
+   * Deserialize sync options (convert date strings to Date objects)
+   */
+  private deserializeSyncOptions(options: ISyncOptions | undefined): ISyncOptions | undefined {
+    if (!options) return options;
+
+    const result = { ...options };
+
+    // Convert fromDate string to Date object
+    if (result.fromDate && typeof result.fromDate === 'string') {
+      result.fromDate = new Date(result.fromDate);
+    }
+
+    // Convert toDate string to Date object
+    if (result.toDate && typeof result.toDate === 'string') {
+      result.toDate = new Date(result.toDate);
+    }
+
+    return result;
   }
 
   /**

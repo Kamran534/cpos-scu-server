@@ -7,8 +7,8 @@
  */
 
 import { PrismaClient } from '@prisma/client';
-import { IIntegrationService, ISyncOptions, ISyncResult } from '../interfaces/IIntegrationService';
-import { ProductPayloadProcessor } from '../processors/ProductPayloadProcessor';
+import { IIntegrationService, ISyncOptions, ISyncResult } from '../interfaces/IIntegrationService.js';
+import { ProductPayloadProcessor } from '../processors/ProductPayloadProcessor.js';
 
 export class IntegrationOrchestrator {
   private integration: IIntegrationService; // Only knows about interface!

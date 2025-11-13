@@ -6,9 +6,9 @@
  * NO DB access, NO business logic
  */
 
-import { TradeUnleashedClient } from '../api/TradeUnleashedClient';
-import { TradeUnleashedConfig } from '../types';
-import { OrderBatchPayload } from '../../../payloads';
+import { TradeUnleashedClient } from '../api/TradeUnleashedClient.js';
+import { TradeUnleashedConfig } from '../types.js';
+import { OrderBatchPayload } from '../../../payloads/index.js';
 
 export class TradeUnleashedOrderService {
   private client: TradeUnleashedClient;

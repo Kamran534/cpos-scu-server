@@ -11,7 +11,7 @@ import {
   TradeUnleashedLoginResponse,
   TradeUnleashedStockQueryParams,
   TradeUnleashedStockQueryResponse,
-} from '../types';
+} from '../types.js';
 
 export class TradeUnleashedClient {
   private config: TradeUnleashedConfig;
@@ -50,7 +50,7 @@ export class TradeUnleashedClient {
       const data = await response.json() as TradeUnleashedLoginResponse;
 
       // Store token (TradeUnleashed uses 'access_token' field)
-      this.accessToken = data.access_token || data.token;
+      this.accessToken = data.access_token || data.token || null;
       
       // Calculate expiry (if provided, otherwise assume 1 hour)
       const expiresIn = data.expires_in || data.expiresIn || 3600; // seconds

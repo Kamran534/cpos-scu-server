@@ -5,9 +5,9 @@
  * Builds login payloads and manages tokens
  */
 
-import { TradeUnleashedClient } from '../api/TradeUnleashedClient';
-import { TradeUnleashedConfig } from '../types';
-import { LoginResponsePayload } from '../../../payloads';
+import { TradeUnleashedClient } from '../api/TradeUnleashedClient.js';
+import { TradeUnleashedConfig } from '../types.js';
+import { LoginResponsePayload } from '../../../payloads/index.js';
 
 export class TradeUnleashedAuthService {
   private client: TradeUnleashedClient;
@@ -31,7 +31,7 @@ export class TradeUnleashedAuthService {
         expiresIn: response.expiresIn,
         tokenType: 'Bearer',
         user: response.user ? {
-          id: response.user.id,
+          id: String(response.user.id),
           username: response.user.username,
           email: response.user.email,
           name: response.user.name,

@@ -12,15 +12,15 @@ import {
   ProductVariantPayload,
   InventoryItemPayload,
   ProductBatchPayload 
-} from '../../payloads';
-import { ProcessResult, ValidationError } from '../types/base.types';
+} from '../../payloads/index.js';
+import { ProcessResult, ValidationError } from '../types/base.types.js';
 import {
   ProductRepository,
   CategoryRepository,
   BrandRepository,
   LocationRepository,
   InventoryItemRepository,
-} from '../repositories';
+} from '../repositories/index.js';
 
 export class ProductPayloadProcessor {
   private prisma: PrismaClient;

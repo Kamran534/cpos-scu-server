@@ -6,6 +6,7 @@ import { PrismaClient } from '@prisma/client';
 import { syncScheduler } from './services/syncScheduler.js';
 import { connectRabbitMQ } from './config/rabbitmq.js';
 import { config } from './config/index.js';
+import { SyncWorker } from './workers/SyncWorker.js';
 
 // Load environment variables
 dotenv.config();
@@ -21,6 +22,9 @@ const PORT = config.port;
 
 // Create PrismaClient
 const prisma = new PrismaClient();
+
+// Create SyncWorker
+const syncWorker = new SyncWorker();
 
 const server = http.createServer(app);
 initSocket(server);
@@ -67,6 +71,19 @@ async function checkRabbitMQConnection(): Promise<boolean> {
   }
 }
 
+async function startSyncWorker(): Promise<boolean> {
+  try {
+    await syncWorker.start();
+    return true;
+  } catch (error) {
+    console.error('\nSync Worker failed to start:');
+    if (error instanceof Error) {
+      console.error(`   ${error.message}`);
+    }
+    return false;
+  }
+}
+
 // Start server
 server.listen(PORT, async () => {
   // Prevent duplicate banner printing
@@ -76,12 +93,20 @@ server.listen(PORT, async () => {
   // Check database connection
   const dbConnected = await checkDatabaseConnection();
   const rabbitConnected = await checkRabbitMQConnection();
+  
+  // Start Sync Worker (if RabbitMQ is connected)
+  let workerRunning = false;
+  if (rabbitConnected) {
+    workerRunning = await startSyncWorker();
+  }
 
   const base = `http://localhost:${PORT}`;
   const rabbitUi = 'http://localhost:15672';
   
   // ANSI color codes
   const cyan = '\x1b[36m';
+  const green = '\x1b[32m';
+  const yellow = '\x1b[33m';
   const reset = '\x1b[0m';
   
   // Helper to strip ANSI codes for width calculation
@@ -94,9 +119,10 @@ server.listen(PORT, async () => {
     ' POS Server is running ',
     ` Base URL   : ${cyan}${base}${reset} `,
     ` Swagger    : ${cyan}${base}/api-docs${reset} `,
-    ` Database   : ${dbConnected ? 'Connected' : 'Not Connected'} `,
-    ` RabbitMQ   : ${rabbitConnected ? 'Connected' : 'Not Connected'} `,
-    ` RabbitMQ UI: ${cyan}${rabbitUi}${reset} `
+    ` Database   : ${dbConnected ? `${green}✓ Connected${reset}` : `${yellow}✗ Not Connected${reset}`} `,
+    ` RabbitMQ   : ${rabbitConnected ? `${green}✓ Connected${reset}` : `${yellow}✗ Not Connected${reset}`} `,
+    ` RabbitMQ UI: ${cyan}${rabbitUi}${reset} `,
+    ` Sync Worker: ${workerRunning ? `${green}✓ Running${reset}` : `${yellow}✗ Not Running${reset}`} `
   ];
   // Calculate width without ANSI codes (strip color codes for width calculation)
   const width = Math.max(...lines.map(l => stripAnsi(l).length)) + 2;
@@ -113,13 +139,58 @@ server.listen(PORT, async () => {
     console.error('⚠️  Warning: Database is not connected. Some features may not work.');
     console.error('   Please check your DATABASE_URL in .env file and ensure PostgreSQL is running.\n');
   } else {
-    // Start automatic sync scheduler (runs every hour)
+    // Start automatic sync scheduler
     syncScheduler.startAutomaticSync();
-    // console.log('✅ Automatic sync scheduler started (runs every hour)');
   }
 
   if (!rabbitConnected) {
     console.error('⚠️  Warning: RabbitMQ is not connected. Messaging features will be unavailable.');
     console.error('   Please verify your RabbitMQ server and environment variables.\n');
   }
+
+  if (!workerRunning && rabbitConnected) {
+    console.error('⚠️  Warning: Sync Worker failed to start. Background sync will be unavailable.');
+    console.error('   Check the logs above for error details.\n');
+  }
+});
+
+// Graceful shutdown
+process.on('SIGINT', async () => {
+  console.log('\n\n🛑 Shutting down gracefully...');
+  
+  // Stop sync worker
+  if (syncWorker.isWorkerRunning()) {
+    console.log('   Stopping Sync Worker...');
+    await syncWorker.stop();
+  }
+  
+  // Close database connection
+  console.log('   Closing database connection...');
+  await prisma.$disconnect();
+  
+  // Close server
+  server.close(() => {
+    console.log('   Server closed\n');
+    process.exit(0);
+  });
+});
+
+process.on('SIGTERM', async () => {
+  console.log('\n\n🛑 Shutting down gracefully...');
+  
+  // Stop sync worker
+  if (syncWorker.isWorkerRunning()) {
+    console.log('   Stopping Sync Worker...');
+    await syncWorker.stop();
+  }
+  
+  // Close database connection
+  console.log('   Closing database connection...');
+  await prisma.$disconnect();
+  
+  // Close server
+  server.close(() => {
+    console.log('   Server closed\n');
+    process.exit(0);
+  });
 });
