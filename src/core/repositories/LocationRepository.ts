@@ -5,7 +5,7 @@
  */
 
 import { PrismaClient, Location } from '@prisma/client';
-import { BaseRepository } from './BaseRepository';
+import { BaseRepository } from './BaseRepository.js';
 
 export class LocationRepository extends BaseRepository<Location> {
   constructor(prisma: PrismaClient) {

@@ -8,11 +8,11 @@
  */
 
 // Base
-export * from './base.payload';
+export * from './base.payload.js';
 
 // Domain payloads
-export * from './product.payload';
-export * from './order.payload';
-export * from './customer.payload';
-export * from './auth.payload';
+export * from './product.payload.js';
+export * from './order.payload.js';
+export * from './customer.payload.js';
+export * from './auth.payload.js';
 

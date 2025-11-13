@@ -5,7 +5,7 @@
  */
 
 import { PrismaClient, InventoryItem } from '@prisma/client';
-import { BaseRepository } from './BaseRepository';
+import { BaseRepository } from './BaseRepository.js';
 
 export class InventoryItemRepository extends BaseRepository<InventoryItem> {
   constructor(prisma: PrismaClient) {

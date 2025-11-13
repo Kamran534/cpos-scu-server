@@ -4,7 +4,7 @@
  * Common language for order data between integration layer and generic layer
  */
 
-import { BasePayload, PayloadMetadata } from './base.payload';
+import { BasePayload, PayloadMetadata } from './base.payload.js';
 
 export interface OrderPayload extends BasePayload {
   // Order identification

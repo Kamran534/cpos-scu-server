@@ -4,10 +4,10 @@
  * All DB access goes through repositories
  */
 
-export * from './BaseRepository';
-export * from './ProductRepository';
-export * from './CategoryRepository';
-export * from './BrandRepository';
-export * from './LocationRepository';
-export * from './InventoryItemRepository';
+export * from './BaseRepository.js';
+export * from './ProductRepository.js';
+export * from './CategoryRepository.js';
+export * from './BrandRepository.js';
+export * from './LocationRepository.js';
+export * from './InventoryItemRepository.js';
 

@@ -4,7 +4,7 @@
  * Common language for customer data between integration layer and generic layer
  */
 
-import { BasePayload, PayloadMetadata } from './base.payload';
+import { BasePayload, PayloadMetadata } from './base.payload.js';
 
 export interface CustomerPayload extends BasePayload {
   // Customer identification

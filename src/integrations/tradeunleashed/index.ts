@@ -8,9 +8,9 @@
  * - NO business logic
  */
 
-export * from './types';
-export * from './api/TradeUnleashedClient';
-export * from './services/TradeUnleashedAuthService';
-export * from './services/TradeUnleashedProductService';
-export * from './services/TradeUnleashedOrderService';
+export * from './types.js';
+export * from './api/TradeUnleashedClient.js';
+export * from './services/TradeUnleashedAuthService.js';
+export * from './services/TradeUnleashedProductService.js';
+export * from './services/TradeUnleashedOrderService.js';
 

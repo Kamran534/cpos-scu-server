@@ -5,5 +5,5 @@
  * Validate, process business logic, save to DB
  */
 
-export * from './ProductPayloadProcessor';
+export * from './ProductPayloadProcessor.js';
 

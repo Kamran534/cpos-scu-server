@@ -6,7 +6,7 @@
  * Generic layer processes this payload and saves to DB
  */
 
-import { BasePayload, PayloadMetadata } from './base.payload';
+import { BasePayload, PayloadMetadata } from './base.payload.js';
 
 export interface ProductPayload extends BasePayload {
   // Basic product info

@@ -8,7 +8,7 @@
  * - NO integration-specific code
  */
 
-export * from './types/base.types';
-export * from './repositories';
-export * from './processors';
+export * from './types/base.types.js';
+export * from './repositories/index.js';
+export * from './processors/index.js';
 

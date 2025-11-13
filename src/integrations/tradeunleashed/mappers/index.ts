@@ -4,5 +4,5 @@
  * Export all mapper/transformer classes
  */
 
-export * from './StockItemMapper';
+export * from './StockItemMapper.js';
 

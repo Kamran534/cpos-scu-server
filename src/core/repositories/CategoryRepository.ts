@@ -5,7 +5,7 @@
  */
 
 import { PrismaClient, Category } from '@prisma/client';
-import { BaseRepository } from './BaseRepository';
+import { BaseRepository } from './BaseRepository.js';
 
 export class CategoryRepository extends BaseRepository<Category> {
   constructor(prisma: PrismaClient) {
