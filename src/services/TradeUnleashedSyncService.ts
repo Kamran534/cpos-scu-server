@@ -100,7 +100,7 @@ export class TradeUnleashedSyncService {
       const batchPayload: ProductBatchPayload = await this.productService.syncAllInventory({
         facilityIds: options?.facilityIds,
         fromDate: options?.fullSync ? undefined : options?.fromDate,
-        batchSize: options?.batchSize || 50,
+        batchSize: options?.batchSize || 300,
       });
 
       console.log(`[TradeUnleashedSync] ✓ Fetched ${batchPayload.products.length} products`);

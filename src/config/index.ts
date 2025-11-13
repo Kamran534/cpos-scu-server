@@ -27,6 +27,7 @@ export const config = {
     baseUrl: process.env.TRADEUNLEASHED_BASE_URL || 'https://q-prod.tradeunleashed.com',
     username: process.env.TRADEUNLEASHED_USERNAME || '03008420717',
     password: process.env.TRADEUNLEASHED_PASSWORD || 'Xaxu@pk00!',
+    defaultFacilityId: process.env.TRADEUNLEASHED_FACILITY_ID || '886375309',
   },
 };
 

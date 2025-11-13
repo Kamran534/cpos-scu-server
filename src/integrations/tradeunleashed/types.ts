@@ -13,6 +13,7 @@ export interface TradeUnleashedConfig {
   username: string;
   password: string;
   tenantId?: string;
+  defaultFacilityId?: string;         // Default facility ID for inventory queries
 }
 
 // ============================================

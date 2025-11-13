@@ -26,7 +26,7 @@ export interface ProductPayload extends BasePayload {
   
   // Metadata
   tags?: string[];
-  customFields?: Record<string, any>;
+  customFields?: Record<string, unknown>;
   
   // Optional metadata
   metadata?: PayloadMetadata;

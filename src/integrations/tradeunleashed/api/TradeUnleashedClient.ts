@@ -11,6 +11,7 @@ import {
   TradeUnleashedLoginResponse,
   TradeUnleashedStockQueryParams,
   TradeUnleashedStockQueryResponse,
+  TradeUnleashedStockItem,
 } from '../types.js';
 
 export class TradeUnleashedClient {
@@ -79,6 +80,8 @@ export class TradeUnleashedClient {
 
     const url = `${this.config.baseUrl}/api/inventoryItems/stockQuery?${queryParams.toString()}`;
 
+    console.log('TradeUnleashed URL:', url);
+
     try {
       const response = await fetch(url, {
         method: 'GET',
@@ -101,7 +104,7 @@ export class TradeUnleashedClient {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const responseData = data as any;
       
-      let items: any[] = [];
+      let items: TradeUnleashedStockItem[] = [];
       
       if (Array.isArray(responseData) && responseData.length >= 2) {
         const headers = responseData[0]; // e.g., ["id", "name", "sku", ...]
@@ -109,22 +112,22 @@ export class TradeUnleashedClient {
         
         if (Array.isArray(headers) && Array.isArray(rows)) {
           // Transform CSV-like format to objects
-          items = rows.map((row: any[]) => {
-            const obj: any = {};
+          items = rows.map((row: unknown[]) => {
+            const obj: Record<string, unknown> = {};
             headers.forEach((header: string, index: number) => {
               obj[header] = row[index];
             });
-            return obj;
+            return obj as TradeUnleashedStockItem;
           });
           
           console.log(`[TradeUnleashedClient] Transformed ${items.length} rows from CSV format to objects`);
         }
       } else if (Array.isArray(responseData)) {
         // Already in object format
-        items = responseData;
+        items = responseData as TradeUnleashedStockItem[];
       } else {
         // Wrapped in data property
-        items = responseData.items || responseData.data || [];
+        items = (responseData.items || responseData.data || []) as TradeUnleashedStockItem[];
       }
       
       return {

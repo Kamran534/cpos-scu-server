@@ -55,7 +55,7 @@ Options:
   --test                  Test connection only (no sync)
   --from=DATE            Sync changes since date (YYYY-MM-DD)
   --facilities=IDS       Comma-separated facility IDs
-  --batch-size=N         Number of items per batch (default: 50)
+  --batch-size=N         Number of items per batch (default: 300)
   --help, -h             Show this help message
 
 Examples:
@@ -136,7 +136,7 @@ async function main() {
     // Parse options
     const facilityIds = options.facilities?.split(',').map(id => id.trim());
     const fromDate = options.from ? new Date(options.from) : undefined;
-    const batchSize = options.batchSize || 50;
+    const batchSize = options.batchSize || 300;
 
     console.log('\nSync Options:');
     console.log(`  Type:        ${fromDate ? 'Incremental' : 'Full'}`);

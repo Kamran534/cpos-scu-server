@@ -18,8 +18,10 @@ import { normalizeStockItems, NormalizedStockItem } from '../mappers/index.js';
 
 export class TradeUnleashedProductService {
   private client: TradeUnleashedClient;
+  private config: TradeUnleashedConfig;
 
   constructor(config: TradeUnleashedConfig) {
+    this.config = config;
     this.client = new TradeUnleashedClient(config);
   }
 
@@ -38,11 +40,14 @@ export class TradeUnleashedProductService {
     defaultFromDate.setDate(defaultFromDate.getDate() - 30);
     const fromDate = params?.fromDate || defaultFromDate;
 
+    // Use provided facilityIds or default from config
+    const facilityIds = params?.facilityIds?.join(',') || this.config.defaultFacilityId;
+
     // Build API params
     const apiParams: TradeUnleashedStockQueryParams = {
-      facilityIds: params?.facilityIds?.join(','),
+      facilityIds: facilityIds,
       fromDate: fromDate.toISOString(),
-      max: params?.max || 50,
+      max: params?.max || 300,
       offset: params?.offset || 0,
       orderBy: 'id,DESC',
     };
@@ -102,7 +107,7 @@ export class TradeUnleashedProductService {
     const allInventory: InventoryItemPayload[] = [];
 
     let offset = 0;
-    const batchSize = params?.batchSize || 50;
+    const batchSize = params?.batchSize || 300;
     let hasMore = true;
 
     while (hasMore) {
