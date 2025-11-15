@@ -4,6 +4,7 @@ import { syncRoutes } from './syncRoutes.js';
 import syncQueueRoutes from './syncQueueRoutes.js';
 import { categoryRoutes } from './categoryRoutes.js';
 import { productRoutes, variantRouter, inventoryRouter } from './productRoutes.js';
+import { customerRoutes } from './customerRoutes.js';
 import { config } from '../config/index.js';
 
 export const apiRouter = Router();
@@ -97,3 +98,4 @@ apiRouter.use('/categories', categoryRoutes);
 apiRouter.use('/products', productRoutes);
 apiRouter.use('/variants', variantRouter);
 apiRouter.use('/inventory', inventoryRouter);
+apiRouter.use('/customers', customerRoutes);
