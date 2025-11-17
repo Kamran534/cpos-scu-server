@@ -22,41 +22,41 @@ enum CustomerType {
 }
 
 model Customer {
-  id                    String            @id @default(uuid())
-  customerCode          String            @unique
-  firstName             String
-  lastName              String
-  email                 String?
-  phone                 String?
-  mobilePhone           String?
-  dateOfBirth           DateTime?
-  gender                String?
-  taxId                 String?
-  customerType          CustomerType      @default(Regular)
-  loyaltyPoints         Int               @default(0)
-  lifetimeValue         Decimal           @default(0) @db.Decimal(12, 2)
-  totalSpent            Decimal           @default(0) @db.Decimal(12, 2)
-  notes                 String?
-  tags                  String[]
-  createdAt             DateTime          @default(now())
-  updatedAt             DateTime          @updatedAt
-  lastVisitDate         DateTime?
-  defaultPaymentMethod  String?
-  creditLimit           Decimal?          @db.Decimal(12, 2)
-  currentBalance        Decimal           @default(0) @db.Decimal(12, 2)
-  marketingOptIn        Boolean           @default(false)
-  emailOptIn            Boolean           @default(false)
-  smsOptIn              Boolean           @default(false)
-  
+  id                   String       @id @default(uuid())
+  customerCode         String       @unique
+  firstName            String
+  lastName             String
+  email                String?
+  phone                String?
+  mobilePhone          String?
+  dateOfBirth          DateTime?
+  gender               String?
+  taxId                String?
+  customerType         CustomerType @default(Regular)
+  loyaltyPoints        Int          @default(0)
+  lifetimeValue        Decimal      @default(0) @db.Decimal(12, 2)
+  totalSpent           Decimal      @default(0) @db.Decimal(12, 2)
+  notes                String?
+  tags                 String[]
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+  lastVisitDate        DateTime?
+  defaultPaymentMethod String?
+  creditLimit          Decimal?     @db.Decimal(12, 2)
+  currentBalance       Decimal      @default(0) @db.Decimal(12, 2)
+  marketingOptIn       Boolean      @default(false)
+  emailOptIn           Boolean      @default(false)
+  smsOptIn             Boolean      @default(false)
+
   // Relationships
-  customerGroupId       String?
-  customerGroup         CustomerGroup?    @relation(fields: [customerGroupId], references: [id])
-  addresses             CustomerAddress[]
-  orders                SaleOrder[]
-  giftCards             GiftCard[]
-  storeCredits          StoreCredit[]
-  returns               ReturnOrder[]
-  parkedOrders          ParkedOrder[]
+  customerGroupId String?
+  customerGroup   CustomerGroup?    @relation(fields: [customerGroupId], references: [id])
+  addresses       CustomerAddress[]
+  orders          SaleOrder[]
+  giftCards       GiftCard[]
+  storeCredits    StoreCredit[]
+  returns         ReturnOrder[]
+  parkedOrders    ParkedOrder[]
 
   @@index([customerCode])
   @@index([email])
@@ -89,14 +89,14 @@ model CustomerAddress {
 }
 
 model CustomerGroup {
-  id              String     @id @default(uuid())
-  name            String     @unique
-  discountPercent Decimal    @default(0) @db.Decimal(5, 2)
+  id              String   @id @default(uuid())
+  name            String   @unique
+  discountPercent Decimal  @default(0) @db.Decimal(5, 2)
   description     String?
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
-  
-  customers       Customer[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  customers Customer[]
 }
 
 // ============================================
@@ -110,41 +110,41 @@ enum LocationType {
 }
 
 model Location {
-  id                    String          @id @default(uuid())
-  code                  String          @unique
-  name                  String
-  type                  LocationType
-  address               String?
-  city                  String?
-  state                 String?
-  country               String?
-  postalCode            String?
-  phone                 String?
-  email                 String?
-  timezone              String          @default("UTC")
-  taxRate               Decimal         @default(0) @db.Decimal(5, 2)
-  taxSettings           Json?
-  isActive              Boolean         @default(true)
-  openingHours          Json?
-  defaultCashAccountId  String?
-  defaultBankAccountId  String?
-  createdAt             DateTime        @default(now())
-  updatedAt             DateTime        @updatedAt
-  
+  id                   String       @id @default(uuid())
+  code                 String       @unique
+  name                 String
+  type                 LocationType
+  address              String?
+  city                 String?
+  state                String?
+  country              String?
+  postalCode           String?
+  phone                String?
+  email                String?
+  timezone             String       @default("UTC")
+  taxRate              Decimal      @default(0) @db.Decimal(5, 2)
+  taxSettings          Json?
+  isActive             Boolean      @default(true)
+  openingHours         Json?
+  defaultCashAccountId String?
+  defaultBankAccountId String?
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+
   // Relationships
-  inventoryItems        InventoryItem[]
-  orders                SaleOrder[]
-  cashRegisters         CashRegister[]
-  userAssignments       UserLocation[]
-  stockAdjustments      StockAdjustment[]
-  stockTransfersFrom    StockTransfer[] @relation("TransferFrom")
-  stockTransfersTo      StockTransfer[] @relation("TransferTo")
-  shifts                Shift[]
-  expenses              Expense[]
-  bankAccounts          BankAccount[]
-  bankDeposits          BankDeposit[]
-  cashAccounts          CashAccount[]
-  returns               ReturnOrder[]
+  inventoryItems     InventoryItem[]
+  orders             SaleOrder[]
+  cashRegisters      CashRegister[]
+  userAssignments    UserLocation[]
+  stockAdjustments   StockAdjustment[]
+  stockTransfersFrom StockTransfer[]   @relation("TransferFrom")
+  stockTransfersTo   StockTransfer[]   @relation("TransferTo")
+  shifts             Shift[]
+  expenses           Expense[]
+  bankAccounts       BankAccount[]
+  bankDeposits       BankDeposit[]
+  cashAccounts       CashAccount[]
+  returns            ReturnOrder[]
 
   @@index([code])
   @@index([isActive])
@@ -166,73 +166,73 @@ model Category {
   isActive         Boolean    @default(true)
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
-  
-  products         Product[]
-  promotions       Promotion[] @relation("PromotionCategories")
+
+  products   Product[]
+  promotions Promotion[] @relation("PromotionCategories")
 
   @@index([parentCategoryId])
   @@index([isActive])
 }
 
 model Brand {
-  id          String    @id @default(uuid())
-  name        String    @unique
+  id          String   @id @default(uuid())
+  name        String   @unique
   contactInfo String?
   notes       String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  
-  products    Product[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  products Product[]
 }
 
 model Supplier {
-  id          String    @id @default(uuid())
-  name        String    @unique
+  id          String   @id @default(uuid())
+  name        String   @unique
   contactInfo String?
   email       String?
   phone       String?
   address     String?
   notes       String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  
-  products    Product[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  products Product[]
 }
 
 model TaxCategory {
-  id          String    @id @default(uuid())
-  name        String    @unique
+  id          String   @id @default(uuid())
+  name        String   @unique
   description String?
-  taxRates    String[]  // Array of tax rate IDs
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  
-  products    Product[]
+  taxRates    String[] // Array of tax rate IDs
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  products Product[]
 }
 
 model Product {
-  id             String           @id @default(uuid())
-  productCode    String           @unique
+  id             String       @id @default(uuid())
+  productCode    String       @unique
   name           String
   description    String?
   categoryId     String?
-  category       Category?        @relation(fields: [categoryId], references: [id])
+  category       Category?    @relation(fields: [categoryId], references: [id])
   brandId        String?
-  brand          Brand?           @relation(fields: [brandId], references: [id])
+  brand          Brand?       @relation(fields: [brandId], references: [id])
   supplierId     String?
-  supplier       Supplier?        @relation(fields: [supplierId], references: [id])
-  hasVariants    Boolean          @default(false)
-  trackInventory Boolean          @default(true)
-  isTaxable      Boolean          @default(true)
+  supplier       Supplier?    @relation(fields: [supplierId], references: [id])
+  hasVariants    Boolean      @default(false)
+  trackInventory Boolean      @default(true)
+  isTaxable      Boolean      @default(true)
   taxCategoryId  String?
-  taxCategory    TaxCategory?     @relation(fields: [taxCategoryId], references: [id])
+  taxCategory    TaxCategory? @relation(fields: [taxCategoryId], references: [id])
   images         String[]
   tags           String[]
-  isActive       Boolean          @default(true)
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  
-  variants       ProductVariant[]
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  variants ProductVariant[]
 
   @@index([productCode])
   @@index([categoryId])
@@ -242,31 +242,31 @@ model Product {
 }
 
 model ProductVariant {
-  id             String          @id @default(uuid())
+  id             String   @id @default(uuid())
   productId      String
-  product        Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
-  sku            String          @unique
+  product        Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  sku            String   @unique
   barcode        String?
   upc            String?
   variantName    String
-  options        Json?           // Array of variant options (color, size, etc.)
-  retailPrice    Decimal         @db.Decimal(12, 2)
-  wholesalePrice Decimal?        @db.Decimal(12, 2)
-  cost           Decimal?        @db.Decimal(12, 2)
-  compareAtPrice Decimal?        @db.Decimal(12, 2)
-  weight         Decimal?        @db.Decimal(10, 2)
+  options        Json? // Array of variant options (color, size, etc.)
+  retailPrice    Decimal  @db.Decimal(12, 2)
+  wholesalePrice Decimal? @db.Decimal(12, 2)
+  cost           Decimal? @db.Decimal(12, 2)
+  compareAtPrice Decimal? @db.Decimal(12, 2)
+  weight         Decimal? @db.Decimal(10, 2)
   dimensions     Json?
   image          String?
-  position       Int             @default(0)
-  isActive       Boolean         @default(true)
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  
-  inventoryItems InventoryItem[]
-  orderLineItems OrderLineItem[]
-  serialNumbers  SerialNumber[]
-  barcodes       Barcode[]
-  returnLineItems ReturnLineItem[]
+  position       Int      @default(0)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  inventoryItems       InventoryItem[]
+  orderLineItems       OrderLineItem[]
+  serialNumbers        SerialNumber[]
+  barcodes             Barcode[]
+  returnLineItems      ReturnLineItem[]
   stockAdjustmentLines StockAdjustmentLine[]
   stockTransferLines   StockTransferLine[]
 
@@ -276,21 +276,21 @@ model ProductVariant {
 }
 
 model InventoryItem {
-  id               String         @id @default(uuid())
-  variantId        String
-  variant          ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
-  locationId       String
-  location         Location       @relation(fields: [locationId], references: [id], onDelete: Cascade)
-  quantityOnHand   Int            @default(0)
-  quantityAvailable Int           @default(0)
-  quantityCommitted Int           @default(0)
-  quantityIncoming Int            @default(0)
-  reorderPoint     Int?
-  reorderQuantity  Int?
-  lastCountedAt    DateTime?
-  lastReceivedAt   DateTime?
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
+  id                String         @id @default(uuid())
+  variantId         String
+  variant           ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  locationId        String
+  location          Location       @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  quantityOnHand    Int            @default(0)
+  quantityAvailable Int            @default(0)
+  quantityCommitted Int            @default(0)
+  quantityIncoming  Int            @default(0)
+  reorderPoint      Int?
+  reorderQuantity   Int?
+  lastCountedAt     DateTime?
+  lastReceivedAt    DateTime?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
 
   @@unique([variantId, locationId])
   @@index([variantId])
@@ -322,19 +322,19 @@ enum AdjustmentReason {
 }
 
 model StockAdjustment {
-  id              String         @id @default(uuid())
+  id              String           @id @default(uuid())
   locationId      String
-  location        Location       @relation(fields: [locationId], references: [id])
+  location        Location         @relation(fields: [locationId], references: [id])
   adjustmentType  AdjustmentType
   reason          AdjustmentReason
   referenceNumber String?
   notes           String?
   adjustedBy      String
-  adjustedByUser  User           @relation(fields: [adjustedBy], references: [id])
-  adjustedAt      DateTime       @default(now())
-  createdAt       DateTime       @default(now())
-  
-  lineItems       StockAdjustmentLine[]
+  adjustedByUser  User             @relation(fields: [adjustedBy], references: [id])
+  adjustedAt      DateTime         @default(now())
+  createdAt       DateTime         @default(now())
+
+  lineItems StockAdjustmentLine[]
 
   @@index([locationId])
   @@index([adjustedBy])
@@ -363,21 +363,21 @@ enum TransferStatus {
 }
 
 model StockTransfer {
-  id             String       @id @default(uuid())
+  id             String         @id @default(uuid())
   fromLocationId String
-  fromLocation   Location     @relation("TransferFrom", fields: [fromLocationId], references: [id])
+  fromLocation   Location       @relation("TransferFrom", fields: [fromLocationId], references: [id])
   toLocationId   String
-  toLocation     Location     @relation("TransferTo", fields: [toLocationId], references: [id])
-  transferNumber String       @unique
+  toLocation     Location       @relation("TransferTo", fields: [toLocationId], references: [id])
+  transferNumber String         @unique
   status         TransferStatus @default(Draft)
   transferDate   DateTime
   notes          String?
   createdBy      String
-  createdByUser  User         @relation(fields: [createdBy], references: [id])
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  
-  lineItems      StockTransferLine[]
+  createdByUser  User           @relation(fields: [createdBy], references: [id])
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  lineItems StockTransferLine[]
 
   @@index([transferNumber])
   @@index([fromLocationId])
@@ -403,7 +403,7 @@ model Barcode {
   variantId    String
   variant      ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
   barcodeValue String
-  barcodeType  String         // UPC, EAN13, CODE128, QR, etc.
+  barcodeType  String // UPC, EAN13, CODE128, QR, etc.
   isPrimary    Boolean        @default(false)
   createdAt    DateTime       @default(now())
 
@@ -464,44 +464,55 @@ enum OrderSource {
 }
 
 model SaleOrder {
-  id                String          @id @default(uuid())
-  orderNumber       String          @unique
-  orderType         OrderType       @default(Sale)
-  locationId        String
-  location          Location        @relation(fields: [locationId], references: [id])
-  customerId        String?
-  customer          Customer?       @relation(fields: [customerId], references: [id])
-  cashierId         String
-  cashier           User            @relation("CashierOrders", fields: [cashierId], references: [id])
-  orderDate         DateTime        @default(now())
-  completedAt       DateTime?
-  status            OrderStatus     @default(Open)
-  subtotal          Decimal         @db.Decimal(12, 2)
-  taxAmount         Decimal         @db.Decimal(12, 2)
-  discountAmount    Decimal         @default(0) @db.Decimal(12, 2)
-  totalAmount       Decimal         @db.Decimal(12, 2)
-  amountPaid        Decimal         @default(0) @db.Decimal(12, 2)
-  changeAmount      Decimal         @default(0) @db.Decimal(12, 2)
-  amountDue         Decimal         @default(0) @db.Decimal(12, 2)
-  notes             String?
-  customerNotes     String?
-  internalNotes     String?
-  referenceOrderId  String?
-  source            OrderSource     @default(POS)
-  receiptNumber     String?
-  receiptEmailedAt  DateTime?
-  receiptPrintedAt  DateTime?
-  shiftId           String?
-  shift             Shift?          @relation(fields: [shiftId], references: [id])
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
-  
+  id          String      @id @default(uuid())
+  orderNumber String      @unique
+  orderType   OrderType   @default(Sale)
+  locationId  String
+  location    Location    @relation(fields: [locationId], references: [id])
+  customerId  String?
+  customer    Customer?   @relation(fields: [customerId], references: [id])
+  cashierId   String
+  cashier     User        @relation("CashierOrders", fields: [cashierId], references: [id])
+  orderDate   DateTime    @default(now())
+  completedAt DateTime?
+  status      OrderStatus @default(Open)
+  subtotal    Decimal     @db.Decimal(12, 2)
+  taxAmount   Decimal     @db.Decimal(12, 2)
+
+  // Order-level discounts
+  discountAmount  Decimal @default(0) @db.Decimal(12, 2)
+  discountPercent Decimal @default(0) @db.Decimal(5, 2)
+
+  // Order-level adjustment
+  adjustmentAmount Decimal @default(0) @db.Decimal(12, 2)
+  adjustmentReason String?
+
+  // Coupon code
+  couponCode String?
+
+  totalAmount      Decimal     @db.Decimal(12, 2)
+  amountPaid       Decimal     @default(0) @db.Decimal(12, 2)
+  changeAmount     Decimal     @default(0) @db.Decimal(12, 2)
+  amountDue        Decimal     @default(0) @db.Decimal(12, 2)
+  notes            String?
+  customerNotes    String?
+  internalNotes    String?
+  referenceOrderId String?
+  source           OrderSource @default(POS)
+  receiptNumber    String?
+  receiptEmailedAt DateTime?
+  receiptPrintedAt DateTime?
+  shiftId          String?
+  shift            Shift?      @relation(fields: [shiftId], references: [id])
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
   lineItems         OrderLineItem[]
   payments          OrderPayment[]
   discounts         OrderDiscount[]
   returns           ReturnOrder[]
-  originalExchanges ExchangeOrder[] @relation("OriginalOrder")
-  newExchanges      ExchangeOrder[] @relation("NewOrder")
+  originalExchanges ExchangeOrder[]    @relation("OriginalOrder")
+  newExchanges      ExchangeOrder[]    @relation("NewOrder")
   giftCardsIssued   GiftCard[]
   serialNumbers     SerialNumber[]
   parkedOrder       ParkedOrder?
@@ -517,29 +528,43 @@ model SaleOrder {
 }
 
 model OrderLineItem {
-  id               String         @id @default(uuid())
-  orderId          String
-  order            SaleOrder      @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  variantId        String
-  variant          ProductVariant @relation(fields: [variantId], references: [id])
-  quantity         Int
-  unitPrice        Decimal        @db.Decimal(12, 2)
-  lineDiscount     Decimal        @default(0) @db.Decimal(12, 2)
-  lineTax          Decimal        @default(0) @db.Decimal(12, 2)
-  lineTotal        Decimal        @db.Decimal(12, 2)
-  cost             Decimal?       @db.Decimal(12, 2)
-  isRefunded       Boolean        @default(false)
-  refundedQuantity Int            @default(0)
+  id        String         @id @default(uuid())
+  orderId   String
+  order     SaleOrder      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id])
+
+  // Sales person at line item level
+  salesPersonId String?
+  salesPerson   User?   @relation("LineItemSalesPerson", fields: [salesPersonId], references: [id])
+
+  quantity  Int
+  unitPrice Decimal @db.Decimal(12, 2)
+
+  // Line-level discounts (sale discount)
+  lineDiscount        Decimal @default(0) @db.Decimal(12, 2)
+  lineDiscountPercent Decimal @default(0) @db.Decimal(5, 2)
+
+  // Custom discount at line level
+  customDiscountAmount  Decimal @default(0) @db.Decimal(12, 2)
+  customDiscountPercent Decimal @default(0) @db.Decimal(5, 2)
+
+  lineTax          Decimal  @default(0) @db.Decimal(12, 2)
+  lineTotal        Decimal  @db.Decimal(12, 2)
+  cost             Decimal? @db.Decimal(12, 2)
+  isRefunded       Boolean  @default(false)
+  refundedQuantity Int      @default(0)
   notes            String?
   customizations   Json?
   serialNumbers    String[]
-  createdAt        DateTime       @default(now())
-  
-  returnLineItems  ReturnLineItem[]
+  createdAt        DateTime @default(now())
+
+  returnLineItems     ReturnLineItem[]
   serialNumberRecords SerialNumber[]
 
   @@index([orderId])
   @@index([variantId])
+  @@index([salesPersonId])
 }
 
 enum PaymentStatus {
@@ -550,20 +575,20 @@ enum PaymentStatus {
 }
 
 model OrderPayment {
-  id                String          @id @default(uuid())
+  id                String        @id @default(uuid())
   orderId           String
-  order             SaleOrder       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order             SaleOrder     @relation(fields: [orderId], references: [id], onDelete: Cascade)
   paymentMethodId   String
-  paymentMethod     PaymentMethod   @relation(fields: [paymentMethodId], references: [id])
-  amount            Decimal         @db.Decimal(12, 2)
-  status            PaymentStatus   @default(Pending)
+  paymentMethod     PaymentMethod @relation(fields: [paymentMethodId], references: [id])
+  amount            Decimal       @db.Decimal(12, 2)
+  status            PaymentStatus @default(Pending)
   transactionId     String?
   authorizationCode String?
   cardLast4         String?
   cardBrand         String?
-  processedAt       DateTime        @default(now())
-  refundedAmount    Decimal         @default(0) @db.Decimal(12, 2)
-  createdAt         DateTime        @default(now())
+  processedAt       DateTime      @default(now())
+  refundedAmount    Decimal       @default(0) @db.Decimal(12, 2)
+  createdAt         DateTime      @default(now())
 
   @@index([orderId])
   @@index([paymentMethodId])
@@ -586,28 +611,28 @@ enum ReturnStatus {
 }
 
 model ReturnOrder {
-  id              String        @id @default(uuid())
-  returnNumber    String        @unique
+  id              String       @id @default(uuid())
+  returnNumber    String       @unique
   originalOrderId String
-  originalOrder   SaleOrder     @relation(fields: [originalOrderId], references: [id])
+  originalOrder   SaleOrder    @relation(fields: [originalOrderId], references: [id])
   locationId      String
-  location        Location      @relation(fields: [locationId], references: [id])
+  location        Location     @relation(fields: [locationId], references: [id])
   customerId      String?
-  customer        Customer?     @relation(fields: [customerId], references: [id])
+  customer        Customer?    @relation(fields: [customerId], references: [id])
   processedBy     String
-  processedByUser User          @relation(fields: [processedBy], references: [id])
-  returnDate      DateTime      @default(now())
+  processedByUser User         @relation(fields: [processedBy], references: [id])
+  returnDate      DateTime     @default(now())
   returnType      ReturnType
   returnReason    String?
   notes           String?
   refundMethod    String?
-  refundAmount    Decimal       @db.Decimal(12, 2)
-  restockFee      Decimal       @default(0) @db.Decimal(12, 2)
-  status          ReturnStatus  @default(Pending)
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  
-  lineItems       ReturnLineItem[]
+  refundAmount    Decimal      @db.Decimal(12, 2)
+  restockFee      Decimal      @default(0) @db.Decimal(12, 2)
+  status          ReturnStatus @default(Pending)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  lineItems ReturnLineItem[]
 
   @@index([returnNumber])
   @@index([originalOrderId])
@@ -685,10 +710,10 @@ model PaymentMethod {
   icon                  String?
   createdAt             DateTime          @default(now())
   updatedAt             DateTime          @updatedAt
-  
-  orderPayments         OrderPayment[]
-  expenses              Expense[]
-  shiftTransactions     ShiftTransaction[]
+
+  orderPayments     OrderPayment[]
+  expenses          Expense[]
+  shiftTransactions ShiftTransaction[]
 
   @@index([code])
   @@index([isActive])
@@ -717,19 +742,19 @@ model GiftCard {
 }
 
 model StoreCredit {
-  id         String    @id @default(uuid())
-  customerId String
-  customer   Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  amount     Decimal   @db.Decimal(12, 2)
-  balance    Decimal   @db.Decimal(12, 2)
-  reason     String?
-  issuedDate DateTime  @default(now())
-  expiryDate DateTime?
-  issuedBy   String
-  issuedByUser User    @relation(fields: [issuedBy], references: [id])
-  notes      String?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  id           String    @id @default(uuid())
+  customerId   String
+  customer     Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  amount       Decimal   @db.Decimal(12, 2)
+  balance      Decimal   @db.Decimal(12, 2)
+  reason       String?
+  issuedDate   DateTime  @default(now())
+  expiryDate   DateTime?
+  issuedBy     String
+  issuedByUser User      @relation(fields: [issuedBy], references: [id])
+  notes        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   @@index([customerId])
   @@index([issuedBy])
@@ -740,18 +765,18 @@ model StoreCredit {
 // ============================================
 
 model CashRegister {
-  id             String    @id @default(uuid())
-  code           String    @unique
+  id             String   @id @default(uuid())
+  code           String   @unique
   name           String
   locationId     String
-  location       Location  @relation(fields: [locationId], references: [id])
-  currentShiftId String?   @unique
-  isActive       Boolean   @default(true)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  
-  shifts         Shift[]
-  cashAccounts   CashAccount[]
+  location       Location @relation(fields: [locationId], references: [id])
+  currentShiftId String?  @unique
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  shifts       Shift[]
+  cashAccounts CashAccount[]
 
   @@index([code])
   @@index([locationId])
@@ -765,34 +790,34 @@ enum ShiftStatus {
 }
 
 model Shift {
-  id            String       @id @default(uuid())
-  shiftNumber   String       @unique
-  registerId    String
-  register      CashRegister @relation(fields: [registerId], references: [id])
-  locationId    String
-  location      Location     @relation(fields: [locationId], references: [id])
-  userId        String
-  user          User         @relation("ShiftOperator", fields: [userId], references: [id])
-  openedAt      DateTime     @default(now())
-  closedAt      DateTime?
-  status        ShiftStatus  @default(Open)
-  openingCash   Decimal      @db.Decimal(12, 2)
-  expectedCash  Decimal      @default(0) @db.Decimal(12, 2)
-  actualCash    Decimal?     @db.Decimal(12, 2)
-  cashDifference Decimal?    @db.Decimal(12, 2)
-  totalSales    Decimal      @default(0) @db.Decimal(12, 2)
-  totalReturns  Decimal      @default(0) @db.Decimal(12, 2)
-  totalPayouts  Decimal      @default(0) @db.Decimal(12, 2)
-  notes         String?
-  closedBy      String?
-  closedByUser  User?        @relation("ShiftCloser", fields: [closedBy], references: [id])
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-  
+  id             String       @id @default(uuid())
+  shiftNumber    String       @unique
+  registerId     String
+  register       CashRegister @relation(fields: [registerId], references: [id])
+  locationId     String
+  location       Location     @relation(fields: [locationId], references: [id])
+  userId         String
+  user           User         @relation("ShiftOperator", fields: [userId], references: [id])
+  openedAt       DateTime     @default(now())
+  closedAt       DateTime?
+  status         ShiftStatus  @default(Open)
+  openingCash    Decimal      @db.Decimal(12, 2)
+  expectedCash   Decimal      @default(0) @db.Decimal(12, 2)
+  actualCash     Decimal?     @db.Decimal(12, 2)
+  cashDifference Decimal?     @db.Decimal(12, 2)
+  totalSales     Decimal      @default(0) @db.Decimal(12, 2)
+  totalReturns   Decimal      @default(0) @db.Decimal(12, 2)
+  totalPayouts   Decimal      @default(0) @db.Decimal(12, 2)
+  notes          String?
+  closedBy       String?
+  closedByUser   User?        @relation("ShiftCloser", fields: [closedBy], references: [id])
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
   transactions  ShiftTransaction[]
   orders        SaleOrder[]
   cashMovements CashMovement[]
-  bankDeposits  BankDeposit[] @relation("DepositShifts")
+  bankDeposits  BankDeposit[]      @relation("DepositShifts")
 
   @@index([shiftNumber])
   @@index([registerId])
@@ -810,17 +835,17 @@ enum TransactionType {
 }
 
 model ShiftTransaction {
-  id              String         @id @default(uuid())
+  id              String          @id @default(uuid())
   shiftId         String
-  shift           Shift          @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  shift           Shift           @relation(fields: [shiftId], references: [id], onDelete: Cascade)
   type            TransactionType
-  amount          Decimal        @db.Decimal(12, 2)
+  amount          Decimal         @db.Decimal(12, 2)
   paymentMethodId String?
-  paymentMethod   PaymentMethod? @relation(fields: [paymentMethodId], references: [id])
+  paymentMethod   PaymentMethod?  @relation(fields: [paymentMethodId], references: [id])
   orderId         String?
-  order           SaleOrder?     @relation(fields: [orderId], references: [id])
+  order           SaleOrder?      @relation(fields: [orderId], references: [id])
   notes           String?
-  timestamp       DateTime       @default(now())
+  timestamp       DateTime        @default(now())
 
   @@index([shiftId])
   @@index([type])
@@ -833,16 +858,16 @@ enum CashMovementType {
 }
 
 model CashMovement {
-  id        String           @id @default(uuid())
-  shiftId   String
-  shift     Shift            @relation(fields: [shiftId], references: [id], onDelete: Cascade)
-  type      CashMovementType
-  amount    Decimal          @db.Decimal(12, 2)
-  reason    String
-  notes     String?
-  addedBy   String
-  addedByUser User           @relation(fields: [addedBy], references: [id])
-  timestamp DateTime         @default(now())
+  id          String           @id @default(uuid())
+  shiftId     String
+  shift       Shift            @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  type        CashMovementType
+  amount      Decimal          @db.Decimal(12, 2)
+  reason      String
+  notes       String?
+  addedBy     String
+  addedByUser User             @relation(fields: [addedBy], references: [id])
+  timestamp   DateTime         @default(now())
 
   @@index([shiftId])
   @@index([type])
@@ -866,19 +891,19 @@ enum ExpenseAccountType {
 }
 
 model ExpenseAccount {
-  id              String            @id @default(uuid())
-  code            String            @unique
+  id              String             @id @default(uuid())
+  code            String             @unique
   name            String
   type            ExpenseAccountType
   parentAccountId String?
-  parentAccount   ExpenseAccount?   @relation("AccountHierarchy", fields: [parentAccountId], references: [id])
-  childAccounts   ExpenseAccount[]  @relation("AccountHierarchy")
-  isActive        Boolean           @default(true)
+  parentAccount   ExpenseAccount?    @relation("AccountHierarchy", fields: [parentAccountId], references: [id])
+  childAccounts   ExpenseAccount[]   @relation("AccountHierarchy")
+  isActive        Boolean            @default(true)
   description     String?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-  
-  expenses        Expense[]
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  expenses Expense[]
 
   @@index([code])
   @@index([parentAccountId])
@@ -943,9 +968,9 @@ model BankAccount {
   location       Location?       @relation(fields: [locationId], references: [id])
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
-  
-  deposits       BankDeposit[]
-  expenses       Expense[]
+
+  deposits BankDeposit[]
+  expenses Expense[]
 
   @@index([accountNumber])
   @@index([locationId])
@@ -1010,34 +1035,35 @@ model CashAccount {
 // ============================================
 
 model User {
-  id              String         @id @default(uuid())
-  username        String         @unique
-  email           String         @unique
+  id              String    @id @default(uuid())
+  username        String    @unique
+  email           String    @unique
   firstName       String
   lastName        String
   pin             String?
   passwordHash    String
   roleId          String
-  role            Role           @relation(fields: [roleId], references: [id])
-  isActive        Boolean        @default(true)
+  role            Role      @relation(fields: [roleId], references: [id])
+  isActive        Boolean   @default(true)
   hireDate        DateTime?
   terminationDate DateTime?
   phone           String?
-  employeeCode    String?        @unique
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
-  
+  employeeCode    String?   @unique
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
   locationAssignments UserLocation[]
-  cashierOrders       SaleOrder[]        @relation("CashierOrders")
-  operatedShifts      Shift[]            @relation("ShiftOperator")
-  closedShifts        Shift[]            @relation("ShiftCloser")
+  cashierOrders       SaleOrder[]       @relation("CashierOrders")
+  lineItemsSold       OrderLineItem[]   @relation("LineItemSalesPerson")
+  operatedShifts      Shift[]           @relation("ShiftOperator")
+  closedShifts        Shift[]           @relation("ShiftCloser")
   stockAdjustments    StockAdjustment[]
   stockTransfers      StockTransfer[]
   returns             ReturnOrder[]
   exchanges           ExchangeOrder[]
   issuedStoreCredits  StoreCredit[]
-  createdExpenses     Expense[]          @relation("ExpenseCreator")
-  approvedExpenses    Expense[]          @relation("ExpenseApprover")
+  createdExpenses     Expense[]         @relation("ExpenseCreator")
+  approvedExpenses    Expense[]         @relation("ExpenseApprover")
   bankDeposits        BankDeposit[]
   cashMovements       CashMovement[]
   appliedDiscounts    OrderDiscount[]
@@ -1071,8 +1097,8 @@ model Role {
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  
-  users       User[]
+
+  users User[]
 
   @@index([name])
   @@index([isActive])
@@ -1097,27 +1123,34 @@ enum PromotionApplicability {
 }
 
 model Promotion {
-  id                 String                 @id @default(uuid())
-  code               String                 @unique
-  name               String
-  type               PromotionType
-  value              Decimal                @db.Decimal(12, 2)
-  applicableTo       PromotionApplicability
-  minPurchaseAmount  Decimal?               @db.Decimal(12, 2)
-  maxDiscountAmount  Decimal?               @db.Decimal(12, 2)
-  startDate          DateTime
-  endDate            DateTime
-  usageLimit         Int?
-  usageCount         Int                    @default(0)
+  id                String                 @id @default(uuid())
+  code              String                 @unique
+  name              String
+  type              PromotionType
+  value             Decimal                @db.Decimal(12, 2)
+  applicableTo      PromotionApplicability
+  minPurchaseAmount Decimal?               @db.Decimal(12, 2)
+  maxDiscountAmount Decimal?               @db.Decimal(12, 2)
+  startDate         DateTime
+  endDate           DateTime
+
+  // Usage limits
+  usageLimit            Int? // Total usage limit (null = unlimited)
+  usageCount            Int     @default(0)
+  usageLimitPerCustomer Int? // Per-customer usage limit
+  isSingleUse           Boolean @default(false) // One-time use coupon
+
   customerGroupIds   String[]
   categoryIds        String[]
   productIds         String[]
-  categories         Category[]             @relation("PromotionCategories")
-  isActive           Boolean                @default(true)
-  createdAt          DateTime               @default(now())
-  updatedAt          DateTime               @updatedAt
-  
-  orderDiscounts     OrderDiscount[]
+  categories         Category[] @relation("PromotionCategories")
+  isActive           Boolean    @default(true)
+  requiresCouponCode Boolean    @default(false) // Must enter code to apply
+  description        String? // Coupon description
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+
+  orderDiscounts OrderDiscount[]
 
   @@index([code])
   @@index([isActive])
@@ -1171,18 +1204,18 @@ model TaxRate {
 // ============================================
 
 model ParkedOrder {
-  id         String    @id @default(uuid())
-  parkNumber String    @unique
-  customerId String?
-  customer   Customer? @relation(fields: [customerId], references: [id])
-  orderId    String    @unique
-  order      SaleOrder @relation(fields: [orderId], references: [id])
-  parkedAt   DateTime  @default(now())
-  parkedBy   String
-  parkedByUser User    @relation(fields: [parkedBy], references: [id])
-  expiryDate DateTime?
-  notes      String?
-  createdAt  DateTime  @default(now())
+  id           String    @id @default(uuid())
+  parkNumber   String    @unique
+  customerId   String?
+  customer     Customer? @relation(fields: [customerId], references: [id])
+  orderId      String    @unique
+  order        SaleOrder @relation(fields: [orderId], references: [id])
+  parkedAt     DateTime  @default(now())
+  parkedBy     String
+  parkedByUser User      @relation(fields: [parkedBy], references: [id])
+  expiryDate   DateTime?
+  notes        String?
+  createdAt    DateTime  @default(now())
 
   @@index([parkNumber])
   @@index([customerId])
@@ -1194,8 +1227,8 @@ model AuditLog {
   id         String   @id @default(uuid())
   userId     String?
   user       User?    @relation(fields: [userId], references: [id])
-  action     String   // Create, Update, Delete, View
-  entityType String   // Product, Order, Customer, etc.
+  action     String // Create, Update, Delete, View
+  entityType String // Product, Order, Customer, etc.
   entityId   String
   oldValue   Json?
   newValue   Json?
@@ -1214,7 +1247,7 @@ model SystemSetting {
   id        String   @id @default(uuid())
   key       String   @unique
   value     Json
-  category  String   // Store, Receipt, Email, Tax, Hardware, Sync
+  category  String // Store, Receipt, Email, Tax, Hardware, Sync
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

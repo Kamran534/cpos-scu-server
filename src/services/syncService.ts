@@ -4,7 +4,7 @@
  * Handles synchronization between client SQLite and server PostgreSQL
  */
 
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -105,10 +105,12 @@ export class SyncService {
     for (const record of records) {
       try {
         // Remove sync-specific fields
-        const { is_deleted, ...data } = record;
+        const { is_deleted, ...rest } = record;
+        // Work with a mutable copy so we can safely remove sync metadata
+        const data: Record<string, unknown> = { ...rest };
         // Remove sync metadata fields that aren't needed for Prisma
-        delete (data as any).sync_status;
-        delete (data as any).last_synced_at;
+        delete data.sync_status;
+        delete data.last_synced_at;
 
         // Handle soft deletes
         if (is_deleted) {
@@ -264,7 +266,7 @@ export class SyncService {
     }
 
     // Build where clause
-    const where: any = {};
+    const where: Record<string, unknown> = {};
     if (lastSyncedAt && !useIdForOrdering) {
       // Only filter by timestamp if the table has timestamp fields
       where[timestampField] = {
@@ -278,27 +280,47 @@ export class SyncService {
     const totalCount = await model.count({ where });
 
     // Build orderBy - use the appropriate field
-    const orderBy: any = { [timestampField]: 'asc' };
+    const orderBy: Record<string, 'asc' | 'desc'> = { [timestampField]: 'asc' };
 
     // Build include/select for related data based on table
     const include = this.getIncludeForTable(tableName);
 
     // Get records
-    const records = await model.findMany({
-      where,
-      take: limit,
-      skip: offset,
-      orderBy,
-      ...(include && { include }),
-    });
+    let records: Array<Record<string, unknown>>;
+    try {
+      records = (await model.findMany({
+        where,
+        take: limit,
+        skip: offset,
+        orderBy,
+        ...(include && { include }),
+      })) as Array<Record<string, unknown>>;
+    } catch (error) {
+      if (this.isMissingColumnError(error)) {
+        console.warn(
+          `[SyncService] Missing column detected for table ${tableName}. Falling back to raw query.`,
+          error.meta
+        );
+        records = await this.fetchRecordsFallback(
+          tableName,
+          timestampField,
+          limit,
+          offset,
+          lastSyncedAt,
+          useIdForOrdering
+        );
+      } else {
+        throw error;
+      }
+    }
 
     // Convert Prisma records to sync records
-    const syncRecords: SyncRecord[] = records.map((record: any) => {
+    const syncRecords: SyncRecord[] = records.map((record) => {
       // Flatten related data for sync
       const flattened = this.flattenRecord(record, tableName);
       
       const syncRecord: SyncRecord = {
-        ...flattened,
+        ...(flattened as SyncRecord),
         sync_status: 'synced',
         last_synced_at: new Date().toISOString(),
         is_deleted: false,
@@ -316,8 +338,8 @@ export class SyncService {
   /**
    * Get include/select configuration for related data
    */
-  private getIncludeForTable(tableName: string): any {
-    const includeMap: Record<string, any> = {
+  private getIncludeForTable(tableName: string): Record<string, unknown> | undefined {
+    const includeMap: Record<string, Record<string, unknown>> = {
       Category: {
         parentCategory: {
           select: {
@@ -376,7 +398,7 @@ export class SyncService {
       },
     };
 
-    return includeMap[tableName] || undefined;
+    return includeMap[tableName];
   }
 
   /**
@@ -389,33 +411,73 @@ export class SyncService {
   /**
    * Convert all keys from snake_case to camelCase
    */
-  private convertKeysToCamelCase(obj: any): any {
+  private convertKeysToCamelCase<T>(obj: T): T {
     if (obj === null || obj === undefined) {
       return obj;
     }
 
     if (Array.isArray(obj)) {
-      return obj.map(item => this.convertKeysToCamelCase(item));
+      return obj.map(item => this.convertKeysToCamelCase(item)) as unknown as T;
     }
 
     if (typeof obj === 'object') {
-      const converted: any = {};
-      for (const key in obj) {
+      const converted: Record<string, unknown> = {};
+      for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
         const camelKey = this.snakeToCamel(key);
-        converted[camelKey] = this.convertKeysToCamelCase(obj[key]);
+        converted[camelKey] = this.convertKeysToCamelCase(value);
       }
-      return converted;
+      return converted as unknown as T;
     }
 
     return obj;
+  }
+
+  private isMissingColumnError(
+    error: unknown
+  ): error is Prisma.PrismaClientKnownRequestError & { meta?: Record<string, unknown> } {
+    return (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === 'P2022'
+    );
+  }
+
+  private async fetchRecordsFallback(
+    tableName: string,
+    timestampField: string,
+    limit: number,
+    offset: number,
+    lastSyncedAt?: string,
+    useIdForOrdering = false
+  ): Promise<Array<Record<string, unknown>>> {
+    const tableIdentifier = Prisma.raw(`"${tableName}"`);
+    const orderField = useIdForOrdering ? 'id' : timestampField;
+    const orderIdentifier = Prisma.raw(`"${orderField}"`);
+
+    const whereClause =
+      lastSyncedAt && !useIdForOrdering
+        ? Prisma.sql`WHERE ${orderIdentifier} >= ${new Date(lastSyncedAt)}`
+        : Prisma.sql``;
+
+    const query = Prisma.sql`
+      SELECT * FROM ${tableIdentifier}
+      ${whereClause}
+      ORDER BY ${orderIdentifier} ASC
+      LIMIT ${Prisma.raw(limit.toString())}
+      OFFSET ${Prisma.raw(offset.toString())}
+    `;
+
+    return prisma.$queryRaw<Array<Record<string, unknown>>>(query);
   }
 
   /**
    * Remove immutable fields that cannot be updated
    * These are typically relation ID fields that are part of unique constraints
    */
-  private removeImmutableFields(data: any, tableName: string): any {
-    const result = { ...data };
+  private removeImmutableFields(
+    data: Record<string, unknown>,
+    tableName: string
+  ): Record<string, unknown> {
+    const result: Record<string, unknown> = { ...data };
 
     // Define fields that should be excluded from updates for specific tables
     const immutableFieldsByTable: Record<string, string[]> = {
@@ -442,8 +504,9 @@ export class SyncService {
 
     // Remove null values from update data to avoid conflicts with non-nullable fields
     // Prisma will keep existing values for fields not included in the update
-    Object.keys(result).forEach(key => {
-      if (result[key] === null || result[key] === undefined) {
+    Object.keys(result).forEach((key: string) => {
+      const value = result[key];
+      if (value === null || value === undefined) {
         delete result[key];
       }
     });
@@ -454,16 +517,20 @@ export class SyncService {
   /**
    * Sanitize data for Prisma (convert types, handle relationships)
    */
-  private sanitizeData(data: any, tableName: string): any {
+  private sanitizeData(
+    data: Record<string, unknown>,
+    tableName: string
+  ): Record<string, unknown> {
     // First convert snake_case keys to camelCase (SQLite uses snake_case, Prisma uses camelCase)
     const camelCaseData = this.convertKeysToCamelCase(data);
-    const sanitized: any = { ...camelCaseData };
+    const sanitized: Record<string, unknown> = { ...camelCaseData };
 
     // FIRST: Convert integer boolean values (0/1) to actual booleans
     // This must happen BEFORE decimal conversion to avoid conflicts
     // SQLite stores booleans as integers (0 or 1), but Prisma expects true booleans
     for (const key in sanitized) {
-      if (typeof sanitized[key] === 'number' && (sanitized[key] === 0 || sanitized[key] === 1)) {
+      const value = sanitized[key];
+      if (typeof value === 'number' && (value === 0 || value === 1)) {
         // Check if this field is a boolean field by naming convention
         const keyLower = key.toLowerCase();
         const booleanFieldPrefixes = ['is', 'has', 'track', 'allow', 'enable', 'require', 'show'];
@@ -476,7 +543,7 @@ export class SyncService {
         );
 
         if (isBooleanField) {
-          sanitized[key] = sanitized[key] === 1;
+          sanitized[key] = value === 1;
         }
       }
     }
@@ -491,20 +558,24 @@ export class SyncService {
 
     // Handle Decimal fields (convert strings to numbers)
     for (const key in sanitized) {
-      if (decimalFields.some(field => key.toLowerCase().includes(field.toLowerCase()))) {
-        if (sanitized[key] !== null && sanitized[key] !== undefined) {
-          if (typeof sanitized[key] === 'string') {
-            const num = parseFloat(sanitized[key]);
-            sanitized[key] = isNaN(num) ? null : num;
-          } else if (typeof sanitized[key] === 'number' && sanitized[key] !== 0 && sanitized[key] !== 1) {
-            // Already a number (but not a boolean), keep as is
-          } else if (typeof sanitized[key] === 'boolean') {
-            // Skip booleans that were already converted
-            continue;
-          } else {
-            // Invalid type for decimal, set to null
-            sanitized[key] = null;
-          }
+      const value = sanitized[key];
+      if (
+        decimalFields.some(field => key.toLowerCase().includes(field.toLowerCase())) &&
+        value !== null &&
+        value !== undefined
+      ) {
+        if (typeof value === 'string') {
+          const num = parseFloat(value);
+          sanitized[key] = Number.isNaN(num) ? null : num;
+        } else if (typeof value === 'number' && value !== 0 && value !== 1) {
+          // Already numeric (non-boolean), keep as is
+        } else if (value && typeof value === 'object' && 'toNumber' in value) {
+          const numericValue = (value as { toNumber: () => number }).toNumber();
+          sanitized[key] = numericValue;
+        } else if (typeof value === 'boolean') {
+          continue;
+        } else {
+          sanitized[key] = null;
         }
       }
     }
@@ -541,42 +612,41 @@ export class SyncService {
         // Role.permissions is stored as JSON string in SQLite but needs to be array in Prisma
         if (tableName === 'Role' && key === 'permissions') {
           try {
-            sanitized[key] = JSON.parse(sanitized[key]);
+            sanitized[key] = JSON.parse(sanitized[key] as string);
           } catch {
-            // If parsing fails, try to treat as array if it looks like one
-            if (sanitized[key].startsWith('[') && sanitized[key].endsWith(']')) {
+            const value = sanitized[key] as string;
+            if (value.startsWith('[') && value.endsWith(']')) {
               try {
-                sanitized[key] = JSON.parse(sanitized[key]);
+                sanitized[key] = JSON.parse(value);
               } catch {
                 // If still fails, set to empty array
                 sanitized[key] = [];
               }
             } else {
               // Not JSON array, keep as is (might be a single string)
-              sanitized[key] = [sanitized[key]];
+              sanitized[key] = [value];
             }
           }
         }
         // ProductVariant.options and ProductVariant.dimensions are JSON fields
         else if (tableName === 'ProductVariant' && (key === 'options' || key === 'dimensions')) {
           try {
-            sanitized[key] = JSON.parse(sanitized[key]);
+            sanitized[key] = JSON.parse(sanitized[key] as string);
           } catch {
-            // If parsing fails, set to null
             sanitized[key] = null;
           }
         }
         // Product.images and Product.tags are arrays
         else if (tableName === 'Product' && (key === 'images' || key === 'tags')) {
           try {
-            sanitized[key] = JSON.parse(sanitized[key]);
+            sanitized[key] = JSON.parse(sanitized[key] as string);
           } catch {
-            // If parsing fails, try to treat as array
-            if (Array.isArray(sanitized[key])) {
-              // Already an array, keep as is
-            } else if (typeof sanitized[key] === 'string' && sanitized[key].startsWith('[')) {
+            const value = sanitized[key];
+            if (Array.isArray(value)) {
+              // Already an array
+            } else if (typeof value === 'string' && value.startsWith('[')) {
               try {
-                sanitized[key] = JSON.parse(sanitized[key]);
+                sanitized[key] = JSON.parse(value);
               } catch {
                 sanitized[key] = [];
               }
@@ -588,7 +658,7 @@ export class SyncService {
         // Category.tags, Promotion.categoryIds, etc. are arrays
         else if (key === 'tags' || key === 'categoryIds' || key === 'productIds' || key === 'customerGroupIds' || key === 'taxRates' || key === 'applicableLocations' || key === 'shiftIds') {
           try {
-            sanitized[key] = JSON.parse(sanitized[key]);
+            sanitized[key] = JSON.parse(sanitized[key] as string);
           } catch {
             if (Array.isArray(sanitized[key])) {
               // Already an array
@@ -600,7 +670,7 @@ export class SyncService {
         // Other JSON fields (Settings, etc.)
         else if (key.includes('Settings') || key.includes('settings') || key.includes('Hours') || key.includes('openingHours') || key.includes('taxSettings')) {
           try {
-            sanitized[key] = JSON.parse(sanitized[key]);
+            sanitized[key] = JSON.parse(sanitized[key] as string);
           } catch {
             // Not JSON, keep as is
           }
@@ -611,16 +681,16 @@ export class SyncService {
     // Normalize Product-specific fields and relations
     if (tableName === 'Product') {
       // Ensure tags is an array if provided, otherwise remove
-      if (sanitized.tags === null || sanitized.tags === undefined) {
+      const tags = sanitized.tags;
+      if (tags === null || tags === undefined) {
         delete sanitized.tags;
-      } else if (!Array.isArray(sanitized.tags)) {
-        sanitized.tags = Array.isArray(sanitized.tags)
-          ? sanitized.tags
-          : typeof sanitized.tags === 'string' && sanitized.tags.length > 0
-            ? [sanitized.tags]
-            : [];
-        if (sanitized.tags.length === 0) {
+      } else if (!Array.isArray(tags)) {
+        const normalized =
+          typeof tags === 'string' && tags.length > 0 ? [tags] : [];
+        if (normalized.length === 0) {
           delete sanitized.tags;
+        } else {
+          sanitized.tags = normalized;
         }
       }
 
@@ -669,8 +739,11 @@ export class SyncService {
   /**
    * Flatten record with related data for sync
    */
-  private flattenRecord(record: any, tableName: string): any {
-    const flattened: any = { ...record };
+  private flattenRecord(
+    record: Record<string, unknown>,
+    tableName: string
+  ): Record<string, unknown> {
+    const flattened: Record<string, unknown> = { ...record };
 
     // Handle Category with parentCategory
     if (tableName === 'Category' && record.parentCategory) {
@@ -719,8 +792,15 @@ export class SyncService {
         flattened[key] = flattened[key].toISOString();
       }
       // Handle Decimal types from Prisma
-      if (flattened[key] && typeof flattened[key] === 'object' && flattened[key].constructor?.name === 'Decimal') {
-        flattened[key] = flattened[key].toNumber();
+      const value = flattened[key];
+      if (
+        value &&
+        typeof value === 'object' &&
+        value.constructor?.name === 'Decimal' &&
+        'toNumber' in value &&
+        typeof (value as { toNumber: unknown }).toNumber === 'function'
+      ) {
+        flattened[key] = (value as { toNumber: () => number }).toNumber();
       }
     }
 

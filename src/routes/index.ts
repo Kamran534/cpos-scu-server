@@ -5,6 +5,8 @@ import syncQueueRoutes from './syncQueueRoutes.js';
 import { categoryRoutes } from './categoryRoutes.js';
 import { productRoutes, variantRouter, inventoryRouter } from './productRoutes.js';
 import { customerRoutes } from './customerRoutes.js';
+import { salesOrderRoutes } from './salesOrderRoutes.js';
+import { promotionRoutes } from './promotionRoutes.js';
 import { config } from '../config/index.js';
 
 export const apiRouter = Router();
@@ -99,3 +101,5 @@ apiRouter.use('/products', productRoutes);
 apiRouter.use('/variants', variantRouter);
 apiRouter.use('/inventory', inventoryRouter);
 apiRouter.use('/customers', customerRoutes);
+apiRouter.use('/orders', salesOrderRoutes);
+apiRouter.use('/promotions', promotionRoutes);
