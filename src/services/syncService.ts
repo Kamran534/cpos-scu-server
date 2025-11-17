@@ -8,9 +8,19 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+// Type for Prisma delegate with common operations
+// Using a more flexible type to accommodate Prisma's complex generic types
+type PrismaDelegate = {
+  findUnique: (args: { where: { id: string } }) => Promise<unknown | null>;
+  create: (args: { data: Record<string, unknown> }) => Promise<unknown>;
+  update: (args: { where: { id: string }; data: Record<string, unknown> }) => Promise<unknown>;
+  findMany: (args?: { where?: Record<string, unknown>; take?: number; skip?: number; orderBy?: Record<string, unknown>; include?: Record<string, unknown> }) => Promise<unknown[]>;
+  count: (args?: { where?: Record<string, unknown> }) => Promise<number>;
+};
+
 export interface SyncRecord {
   id: string;
-  [key: string]: any;
+  [key: string]: unknown;
   sync_status?: string;
   last_synced_at?: string | Date;
   is_deleted?: boolean;
@@ -39,7 +49,8 @@ export class SyncService {
     const result = { created: 0, updated: 0, errors: [] as string[] };
 
     // Map table names to Prisma models
-    const modelMap: Record<string, any> = {
+    // Type assertion needed because Prisma delegates have complex generic types
+    const modelMap = {
       CustomerGroup: prisma.customerGroup,
       Location: prisma.location,
       Category: prisma.category,
@@ -84,7 +95,7 @@ export class SyncService {
       ParkedOrder: prisma.parkedOrder,
       AuditLog: prisma.auditLog,
       SystemSetting: prisma.systemSetting,
-    };
+    } as unknown as Record<string, PrismaDelegate>;
 
     const model = modelMap[tableName];
     if (!model) {
@@ -94,7 +105,10 @@ export class SyncService {
     for (const record of records) {
       try {
         // Remove sync-specific fields
-        const { sync_status, last_synced_at, is_deleted, ...data } = record;
+        const { is_deleted, ...data } = record;
+        // Remove sync metadata fields that aren't needed for Prisma
+        delete (data as any).sync_status;
+        delete (data as any).last_synced_at;
 
         // Handle soft deletes
         if (is_deleted) {
@@ -150,7 +164,8 @@ export class SyncService {
     const { lastSyncedAt, limit = 100, offset = 0 } = options;
 
     // Map table names to Prisma models
-    const modelMap: Record<string, any> = {
+    // Type assertion needed because Prisma delegates have complex generic types
+    const modelMap = {
       CustomerGroup: prisma.customerGroup,
       Location: prisma.location,
       Category: prisma.category,
@@ -195,7 +210,7 @@ export class SyncService {
       ParkedOrder: prisma.parkedOrder,
       AuditLog: prisma.auditLog,
       SystemSetting: prisma.systemSetting,
-    };
+    } as unknown as Record<string, PrismaDelegate>;
 
     const model = modelMap[tableName];
     if (!model) {
@@ -590,6 +605,56 @@ export class SyncService {
             // Not JSON, keep as is
           }
         }
+      }
+    }
+
+    // Normalize Product-specific fields and relations
+    if (tableName === 'Product') {
+      // Ensure tags is an array if provided, otherwise remove
+      if (sanitized.tags === null || sanitized.tags === undefined) {
+        delete sanitized.tags;
+      } else if (!Array.isArray(sanitized.tags)) {
+        sanitized.tags = Array.isArray(sanitized.tags)
+          ? sanitized.tags
+          : typeof sanitized.tags === 'string' && sanitized.tags.length > 0
+            ? [sanitized.tags]
+            : [];
+        if (sanitized.tags.length === 0) {
+          delete sanitized.tags;
+        }
+      }
+
+      // Convert categoryId to category relation
+      if (sanitized.categoryId !== undefined && sanitized.categoryId !== null) {
+        sanitized.category = { connect: { id: sanitized.categoryId } };
+        delete sanitized.categoryId;
+      } else {
+        // Remove null/undefined categoryId
+        delete sanitized.categoryId;
+      }
+      // Convert brandId to brand relation
+      if (sanitized.brandId !== undefined && sanitized.brandId !== null) {
+        sanitized.brand = { connect: { id: sanitized.brandId } };
+        delete sanitized.brandId;
+      } else {
+        // Remove null/undefined brandId
+        delete sanitized.brandId;
+      }
+      // Convert supplierId to supplier relation
+      if (sanitized.supplierId !== undefined && sanitized.supplierId !== null) {
+        sanitized.supplier = { connect: { id: sanitized.supplierId } };
+        delete sanitized.supplierId;
+      } else {
+        // Remove null/undefined supplierId
+        delete sanitized.supplierId;
+      }
+      // Convert taxCategoryId to taxCategory relation
+      if (sanitized.taxCategoryId !== undefined && sanitized.taxCategoryId !== null) {
+        sanitized.taxCategory = { connect: { id: sanitized.taxCategoryId } };
+        delete sanitized.taxCategoryId;
+      } else {
+        // Remove null/undefined taxCategoryId
+        delete sanitized.taxCategoryId;
       }
     }
 

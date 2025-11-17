@@ -43,7 +43,7 @@ export class CustomerController {
    * Get all customers
    * GET /api/customers
    */
-  async getAllCustomers(req: AuthRequest, res: Response): Promise<void> {
+  async getAllCustomers(_req: AuthRequest, res: Response): Promise<void> {
     try {
       const customers = await customerService.getAllCustomers();
 
