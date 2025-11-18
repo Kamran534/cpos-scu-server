@@ -7,6 +7,7 @@ import { syncScheduler } from './services/syncScheduler.js';
 import { connectRabbitMQ } from './config/rabbitmq.js';
 import { config } from './config/index.js';
 import { SyncWorker } from './workers/SyncWorker.js';
+import { ensureDatabaseSchema } from './utils/ensureDatabaseSchema.js';
 
 // Load environment variables
 dotenv.config();
@@ -48,6 +49,7 @@ async function checkDatabaseConnection(): Promise<boolean> {
   try {
     await prisma.$connect();
     await prisma.$queryRaw`SELECT 1`;
+    await ensureDatabaseSchema(prisma);
     return true;
   } catch (error) {
     console.error('\nDatabase connection failed:');

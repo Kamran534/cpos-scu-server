@@ -7,6 +7,7 @@ import { productRoutes, variantRouter, inventoryRouter } from './productRoutes.j
 import { customerRoutes } from './customerRoutes.js';
 import { salesOrderRoutes } from './salesOrderRoutes.js';
 import { promotionRoutes } from './promotionRoutes.js';
+import { paymentMethodRoutes } from './paymentMethodRoutes.js';
 import { config } from '../config/index.js';
 
 export const apiRouter = Router();
@@ -102,4 +103,5 @@ apiRouter.use('/variants', variantRouter);
 apiRouter.use('/inventory', inventoryRouter);
 apiRouter.use('/customers', customerRoutes);
 apiRouter.use('/orders', salesOrderRoutes);
+apiRouter.use('/payment-methods', paymentMethodRoutes);
 apiRouter.use('/promotions', promotionRoutes);

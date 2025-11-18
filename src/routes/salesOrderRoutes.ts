@@ -88,6 +88,12 @@ export const salesOrderRoutes = Router();
  */
 salesOrderRoutes.post('/', async (req: Request, res: Response) => {
   try {
+    console.log('[POST /api/orders] Received order data:', {
+      locationId: req.body.locationId,
+      cashierId: req.body.cashierId,
+      customerId: req.body.customerId,
+      lineItemsCount: req.body.lineItems?.length,
+    });
     const order = await SalesOrderService.createSalesOrder(req.body);
     res.status(201).json({ success: true, order });
   } catch (error: any) {

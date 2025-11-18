@@ -10,7 +10,7 @@
  * - Coupon code validation and application
  */
 
-import { PrismaClient, Prisma } from '@prisma/client';
+import { PrismaClient, Prisma, OrderStatus } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -18,14 +18,25 @@ const prisma = new PrismaClient();
 // Types and Interfaces
 // ============================================
 
+export interface OrderPaymentDTO {
+  paymentMethodId: string;
+  amount: number;
+  transactionId?: string;
+  authorizationCode?: string;
+  cardLast4?: string;
+  cardBrand?: string;
+}
+
 export interface CreateSalesOrderDTO {
   locationId: string;
   cashierId: string;
   customerId?: string;
   lineItems: CreateOrderLineItemDTO[];
+  payments?: OrderPaymentDTO[];
   orderLevelDiscount?: OrderLevelDiscountDTO;
   adjustment?: OrderAdjustmentDTO;
-  couponCode?: string;
+  giftCardNumber?: string;
+  couponCode?: string; // Deprecated: Use giftCardNumber instead
   notes?: string;
   customerNotes?: string;
 }
@@ -58,7 +69,7 @@ export interface OrderAdjustmentDTO {
 export interface CouponValidationResult {
   isValid: boolean;
   error?: string;
-  promotion?: any;
+  promotion?: Prisma.GiftCardGetPayload<Record<string, never>>;
   discountAmount?: number;
 }
 
@@ -94,7 +105,23 @@ export class SalesOrderService {
    */
   static async createSalesOrder(data: CreateSalesOrderDTO) {
     try {
-      // 1. Validate customer if provided
+      // 1. Validate location
+      const location = await prisma.location.findUnique({
+        where: { id: data.locationId },
+      });
+      if (!location) {
+        throw new Error(`Location not found: ${data.locationId}`);
+      }
+
+      // 2. Validate cashier
+      const cashier = await prisma.user.findUnique({
+        where: { id: data.cashierId },
+      });
+      if (!cashier) {
+        throw new Error(`Cashier not found: ${data.cashierId}`);
+      }
+
+      // 3. Validate customer if provided
       if (data.customerId) {
         const customer = await prisma.customer.findUnique({
           where: { id: data.customerId },
@@ -104,25 +131,26 @@ export class SalesOrderService {
         }
       }
 
-      // 2. Validate coupon code if provided
-      let couponValidation: CouponValidationResult | null = null;
-      if (data.couponCode) {
-        couponValidation = await this.validateCoupon(
-          data.couponCode,
+      // 4. Validate gift card if provided
+      let giftCardValidation: CouponValidationResult | null = null;
+      const giftCardNumber = data.giftCardNumber || data.couponCode;
+      if (giftCardNumber) {
+        giftCardValidation = await this.validateGiftCard(
+          giftCardNumber,
           data.customerId
         );
-        if (!couponValidation.isValid) {
-          throw new Error(couponValidation.error || 'Invalid coupon code');
+        if (!giftCardValidation.isValid) {
+          throw new Error(giftCardValidation.error || 'Invalid gift card');
         }
       }
 
-      // 3. Calculate order totals
-      const calculation = await this.calculateOrderTotals(data, couponValidation);
+      // 5. Calculate order totals
+      const calculation = await this.calculateOrderTotals(data, giftCardValidation);
 
-      // 4. Generate unique order number
+      // 6. Generate unique order number
       const orderNumber = await this.generateOrderNumber();
 
-      // 5. Create the order with all line items in a transaction
+      // 7. Create the order with all line items in a transaction
       const order = await prisma.$transaction(async (tx) => {
         // Create the order
         const newOrder = await tx.saleOrder.create({
@@ -141,7 +169,7 @@ export class SalesOrderService {
             ),
             adjustmentAmount: new Prisma.Decimal(data.adjustment?.amount || 0),
             adjustmentReason: data.adjustment?.reason,
-            couponCode: data.couponCode,
+            // Note: couponCode column removed from database - gift card tracked separately
             totalAmount: new Prisma.Decimal(calculation.totalAmount),
             amountDue: new Prisma.Decimal(calculation.totalAmount),
             notes: data.notes,
@@ -155,23 +183,35 @@ export class SalesOrderService {
           const item = data.lineItems[i];
           const itemCalc = calculation.lineItems[i];
 
+          // Handle case where productId is sent instead of variantId
+          // Try to find variant, if not found, it might be a product ID
+          let actualVariantId = item.variantId;
+
+          const variant = await tx.productVariant.findUnique({
+            where: { id: item.variantId },
+          });
+
+          if (!variant) {
+            // Might be a product ID, find the first variant for this product
+            const firstVariant = await tx.productVariant.findFirst({
+              where: { productId: item.variantId },
+            });
+
+            if (firstVariant) {
+              actualVariantId = firstVariant.id;
+              console.log(`[SalesOrder] Mapped product ${item.variantId} to variant ${actualVariantId}`);
+            } else {
+              throw new Error(`Product/Variant not found: ${item.variantId}`);
+            }
+          }
+
           await tx.orderLineItem.create({
             data: {
               orderId: newOrder.id,
-              variantId: item.variantId,
-              salesPersonId: item.salesPersonId,
+              variantId: actualVariantId,
               quantity: item.quantity,
               unitPrice: new Prisma.Decimal(item.unitPrice),
-              lineDiscount: new Prisma.Decimal(item.saleDiscount?.amount || 0),
-              lineDiscountPercent: new Prisma.Decimal(
-                item.saleDiscount?.percent || 0
-              ),
-              customDiscountAmount: new Prisma.Decimal(
-                item.customDiscount?.amount || 0
-              ),
-              customDiscountPercent: new Prisma.Decimal(
-                item.customDiscount?.percent || 0
-              ),
+              lineDiscount: new Prisma.Decimal(itemCalc.totalDiscount), // Total of all discounts
               lineTax: new Prisma.Decimal(0), // TODO: Implement tax calculation
               lineTotal: new Prisma.Decimal(itemCalc.lineTotal),
               notes: item.notes,
@@ -179,15 +219,99 @@ export class SalesOrderService {
           });
         }
 
-        // Update coupon usage if applicable
-        if (couponValidation?.promotion) {
-          await tx.promotion.update({
-            where: { id: couponValidation.promotion.id },
+        // Update gift card balance if applicable
+        if (giftCardValidation?.promotion && giftCardValidation.discountAmount) {
+          const giftCard = giftCardValidation.promotion;
+          await tx.giftCard.update({
+            where: { id: giftCard.id },
             data: {
-              usageCount: { increment: 1 },
+              currentBalance: {
+                decrement: Math.min(
+                  giftCardValidation.discountAmount,
+                  Number(giftCard.currentBalance)
+                ),
+              },
             },
           });
         }
+
+        // Process payments if provided
+        let totalAmountPaid = 0;
+        if (data.payments && data.payments.length > 0) {
+          // Map numeric IDs to payment method codes (for backward compatibility)
+          const paymentMethodIdToCode: Record<string, string> = {
+            '1': 'CASH',
+            '2': 'CARD',
+            '3': 'BANK_TRANSFER',
+            '4': 'CHECK',
+            '5': 'GIFT_CARD',
+            '6': 'STORE_CREDIT',
+            '7': 'ON_ACCOUNT',
+          };
+
+          for (const payment of data.payments) {
+            // Try to find payment method by ID first
+            let paymentMethod = await tx.paymentMethod.findUnique({
+              where: { id: payment.paymentMethodId },
+            });
+
+            // If not found by ID, try to find by code (for numeric IDs from frontend)
+            if (!paymentMethod) {
+              const code = paymentMethodIdToCode[payment.paymentMethodId];
+              if (code) {
+                paymentMethod = await tx.paymentMethod.findUnique({
+                  where: { code },
+                });
+                if (!paymentMethod) {
+                  console.error(`[SalesOrder] Payment method not found by code: ${code} (ID: ${payment.paymentMethodId})`);
+                }
+              } else {
+                console.error(`[SalesOrder] No code mapping found for payment method ID: ${payment.paymentMethodId}`);
+              }
+            }
+
+            if (!paymentMethod) {
+              throw new Error(
+                `Payment method not found: ${payment.paymentMethodId}. ` +
+                `Available codes: ${Object.values(paymentMethodIdToCode).join(', ')}. ` +
+                `Tried to map to code: ${paymentMethodIdToCode[payment.paymentMethodId] || 'N/A'}`
+              );
+            }
+
+            // Create payment record using the actual payment method ID from database
+            await tx.orderPayment.create({
+              data: {
+                orderId: newOrder.id,
+                paymentMethodId: paymentMethod.id,
+                amount: new Prisma.Decimal(payment.amount),
+                status: 'Completed',
+                transactionId: payment.transactionId,
+                authorizationCode: payment.authorizationCode,
+                cardLast4: payment.cardLast4,
+                cardBrand: payment.cardBrand,
+              },
+            });
+
+            totalAmountPaid += payment.amount;
+          }
+        }
+
+        // Calculate final amounts
+        const amountDue = calculation.totalAmount - totalAmountPaid;
+        const changeAmount = amountDue < 0 ? Math.abs(amountDue) : 0;
+        const finalStatus = amountDue <= 0.01 ? 'Completed' : 'Open';
+
+        // Update order with payment information
+        const updatedOrder = await tx.saleOrder.update({
+          where: { id: newOrder.id },
+          data: {
+            amountPaid: new Prisma.Decimal(totalAmountPaid),
+            amountDue: new Prisma.Decimal(Math.max(0, amountDue)),
+            changeAmount: new Prisma.Decimal(changeAmount),
+            status: finalStatus,
+            completedAt: finalStatus === 'Completed' ? new Date() : null,
+          },
+        });
 
         // Update customer stats if applicable
         if (data.customerId) {
@@ -200,7 +324,7 @@ export class SalesOrderService {
           });
         }
 
-        return newOrder;
+        return updatedOrder;
       });
 
       // 6. Fetch and return the complete order with relations
@@ -308,97 +432,84 @@ export class SalesOrderService {
   }
 
   /**
-   * Validate a coupon code
+   * Validate a gift card
+   */
+  static async validateGiftCard(
+    cardNumber: string,
+    customerId?: string
+  ): Promise<CouponValidationResult> {
+    try {
+      const giftCard = await prisma.giftCard.findUnique({
+        where: { cardNumber },
+      });
+
+      if (!giftCard) {
+        return {
+          isValid: false,
+          error: 'Gift card not found',
+        };
+      }
+
+      // Check if gift card belongs to customer (if customerId is provided)
+      if (customerId && giftCard.customerId && giftCard.customerId !== customerId) {
+        return {
+          isValid: false,
+          error: 'Gift card does not belong to this customer',
+        };
+      }
+
+      // Check if active
+      if (!giftCard.isActive) {
+        return {
+          isValid: false,
+          error: 'Gift card is no longer active',
+        };
+      }
+
+      // Check expiry date
+      if (giftCard.expiryDate) {
+        const now = new Date();
+        if (now > giftCard.expiryDate) {
+          return {
+            isValid: false,
+            error: 'Gift card has expired',
+          };
+        }
+      }
+
+      // Check balance
+      const currentBalance = Number(giftCard.currentBalance);
+      if (currentBalance <= 0) {
+        return {
+          isValid: false,
+          error: 'Gift card has no remaining balance',
+        };
+      }
+
+      // Return the gift card with its current balance as the discount amount
+      return {
+        isValid: true,
+        promotion: giftCard,
+        discountAmount: currentBalance,
+      };
+    } catch (error) {
+      console.error('Error validating gift card:', error);
+      return {
+        isValid: false,
+        error: 'Error validating gift card',
+      };
+    }
+  }
+
+  /**
+   * Validate a coupon code (deprecated - kept for backward compatibility)
    */
   static async validateCoupon(
     couponCode: string,
     customerId?: string
   ): Promise<CouponValidationResult> {
-    try {
-      const promotion = await prisma.promotion.findUnique({
-        where: { code: couponCode },
-      });
-
-      if (!promotion) {
-        return {
-          isValid: false,
-          error: 'Coupon code not found',
-        };
-      }
-
-      // Check if active
-      if (!promotion.isActive) {
-        return {
-          isValid: false,
-          error: 'Coupon code is no longer active',
-        };
-      }
-
-      // Check date range
-      const now = new Date();
-      if (now < promotion.startDate || now > promotion.endDate) {
-        return {
-          isValid: false,
-          error: 'Coupon code has expired or is not yet valid',
-        };
-      }
-
-      // Check usage limit
-      if (promotion.usageLimit && promotion.usageCount >= promotion.usageLimit) {
-        return {
-          isValid: false,
-          error: 'Coupon code has reached its usage limit',
-        };
-      }
-
-      // Check single-use restriction
-      if (promotion.isSingleUse && promotion.usageCount > 0) {
-        return {
-          isValid: false,
-          error: 'This coupon code has already been used',
-        };
-      }
-
-      // Check per-customer usage limit
-      if (customerId && promotion.usageLimitPerCustomer) {
-        const customerUsage = await prisma.orderDiscount.count({
-          where: {
-            discountId: promotion.id,
-            order: {
-              customerId,
-            },
-          },
-        });
-
-        if (customerUsage >= promotion.usageLimitPerCustomer) {
-          return {
-            isValid: false,
-            error: 'You have reached the usage limit for this coupon',
-          };
-        }
-      }
-
-      // Calculate discount amount based on promotion type
-      let discountAmount = 0;
-      if (promotion.type === 'Percentage') {
-        // Percentage discount - will be calculated against order subtotal
-        discountAmount = 0; // Will be calculated in calculateOrderTotals
-      } else if (promotion.type === 'FixedAmount') {
-        discountAmount = Number(promotion.value);
-      }
-
-      return {
-        isValid: true,
-        promotion,
-        discountAmount,
-      };
-    } catch (error) {
-      console.error('Error validating coupon:', error);
-      return {
-        isValid: false,
-        error: 'Error validating coupon code',
-      };
-    }
+    // Redirect to gift card validation
+    return this.validateGiftCard(couponCode, customerId);
   }
 
   /**
@@ -423,14 +534,6 @@ export class SalesOrderService {
             variant: {
               include: {
                 product: true,
-              },
-            },
-            salesPerson: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                username: true,
               },
             },
           },
@@ -468,7 +571,7 @@ export class SalesOrderService {
 
     if (filters.customerId) where.customerId = filters.customerId;
     if (filters.locationId) where.locationId = filters.locationId;
-    if (filters.status) where.status = filters.status as any;
+    if (filters.status) where.status = filters.status as OrderStatus;
     if (filters.startDate || filters.endDate) {
       where.orderDate = {};
       if (filters.startDate) where.orderDate.gte = filters.startDate;
@@ -603,11 +706,12 @@ export class SalesOrderService {
     };
 
     if (startDate || endDate) {
+      const orderDateFilter: Prisma.DateTimeFilter = {};
+      if (startDate) orderDateFilter.gte = startDate;
+      if (endDate) orderDateFilter.lte = endDate;
       where.order = {
-        orderDate: {},
+        orderDate: orderDateFilter,
       };
-      if (startDate) where.order.orderDate.gte = startDate;
-      if (endDate) where.order.orderDate.lte = endDate;
     }
 
     const lineItems = await prisma.orderLineItem.findMany({
