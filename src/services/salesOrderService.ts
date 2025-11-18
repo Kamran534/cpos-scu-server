@@ -150,7 +150,39 @@ export class SalesOrderService {
       // 6. Generate unique order number
       const orderNumber = await this.generateOrderNumber();
 
-      // 7. Create the order with all line items in a transaction
+      // 7. Resolve variant IDs BEFORE transaction (prevent timeout)
+      const resolvedLineItems = await Promise.all(
+        data.lineItems.map(async (item, index) => {
+          let actualVariantId = item.variantId;
+
+          // Check if this is a variant ID or product ID
+          const variant = await prisma.productVariant.findUnique({
+            where: { id: item.variantId },
+          });
+
+          if (!variant) {
+            // Might be a product ID, find the first variant for this product
+            const firstVariant = await prisma.productVariant.findFirst({
+              where: { productId: item.variantId },
+            });
+
+            if (firstVariant) {
+              actualVariantId = firstVariant.id;
+              console.log(`[SalesOrder] Mapped product ${item.variantId} to variant ${actualVariantId}`);
+            } else {
+              throw new Error(`Product/Variant not found: ${item.variantId}`);
+            }
+          }
+
+          return {
+            ...item,
+            actualVariantId,
+            calculation: calculation.lineItems[index],
+          };
+        })
+      );
+
+      // 8. Create the order with all line items in a transaction
       const order = await prisma.$transaction(async (tx) => {
         // Create the order
         const newOrder = await tx.saleOrder.create({
@@ -178,42 +210,17 @@ export class SalesOrderService {
           },
         });
 
-        // Create line items
-        for (let i = 0; i < data.lineItems.length; i++) {
-          const item = data.lineItems[i];
-          const itemCalc = calculation.lineItems[i];
-
-          // Handle case where productId is sent instead of variantId
-          // Try to find variant, if not found, it might be a product ID
-          let actualVariantId = item.variantId;
-
-          const variant = await tx.productVariant.findUnique({
-            where: { id: item.variantId },
-          });
-
-          if (!variant) {
-            // Might be a product ID, find the first variant for this product
-            const firstVariant = await tx.productVariant.findFirst({
-              where: { productId: item.variantId },
-            });
-
-            if (firstVariant) {
-              actualVariantId = firstVariant.id;
-              console.log(`[SalesOrder] Mapped product ${item.variantId} to variant ${actualVariantId}`);
-            } else {
-              throw new Error(`Product/Variant not found: ${item.variantId}`);
-            }
-          }
-
+        // Create line items (using pre-resolved variant IDs)
+        for (const item of resolvedLineItems) {
           await tx.orderLineItem.create({
             data: {
               orderId: newOrder.id,
-              variantId: actualVariantId,
+              variantId: item.actualVariantId,
               quantity: item.quantity,
               unitPrice: new Prisma.Decimal(item.unitPrice),
-              lineDiscount: new Prisma.Decimal(itemCalc.totalDiscount), // Total of all discounts
+              lineDiscount: new Prisma.Decimal(item.calculation.totalDiscount),
               lineTax: new Prisma.Decimal(0), // TODO: Implement tax calculation
-              lineTotal: new Prisma.Decimal(itemCalc.lineTotal),
+              lineTotal: new Prisma.Decimal(item.calculation.lineTotal),
               notes: item.notes,
             },
           });

@@ -127,7 +127,19 @@ export class SyncService {
         if (existing) {
           // Update existing record
           // Exclude immutable relation ID fields from update
-          const sanitizedData = this.sanitizeData(data, tableName);
+        const sanitizedData = this.sanitizeData(data, tableName);
+
+        if (tableName === 'OrderLineItem') {
+          const variantCheck = await this.ensureOrderLineItemVariantExists(
+            sanitizedData,
+            record.id
+          );
+          if (!variantCheck.success) {
+            result.errors.push(variantCheck.message);
+            console.warn(`[SyncService] ${variantCheck.message}`);
+            continue;
+          }
+        }
           const updateData = this.removeImmutableFields(sanitizedData, tableName);
 
           await model.update({
@@ -137,8 +149,21 @@ export class SyncService {
           result.updated++;
         } else {
           // Create new record
+          const sanitizedData = this.sanitizeData(data, tableName);
+          if (tableName === 'OrderLineItem') {
+            const variantCheck = await this.ensureOrderLineItemVariantExists(
+              sanitizedData,
+              record.id
+            );
+            if (!variantCheck.success) {
+              result.errors.push(variantCheck.message);
+              console.warn(`[SyncService] ${variantCheck.message}`);
+              continue;
+            }
+          }
+          const createData = await this.prepareCreateData(sanitizedData, tableName);
           await model.create({
-            data: this.sanitizeData(data, tableName),
+            data: createData,
           });
           result.created++;
         }
@@ -567,8 +592,9 @@ export class SyncService {
         if (typeof value === 'string') {
           const num = parseFloat(value);
           sanitized[key] = Number.isNaN(num) ? null : num;
-        } else if (typeof value === 'number' && value !== 0 && value !== 1) {
-          // Already numeric (non-boolean), keep as is
+        } else if (typeof value === 'number') {
+          // Already numeric (and not converted to boolean earlier), keep as-is
+          sanitized[key] = value;
         } else if (value && typeof value === 'object' && 'toNumber' in value) {
           const numericValue = (value as { toNumber: () => number }).toNumber();
           sanitized[key] = numericValue;
@@ -728,12 +754,163 @@ export class SyncService {
       }
     }
 
+    // Normalize SaleOrder fields (server schema lacks couponCode/giftCardNumber columns)
+    if (tableName === 'SaleOrder') {
+      delete sanitized.couponCode;
+      delete sanitized.giftCardNumber;
+    }
+
+    // Normalize OrderLineItem fields (server schema does not store salesperson/custom percents)
+    if (tableName === 'OrderLineItem') {
+      delete sanitized.salesPersonId;
+      delete sanitized.lineDiscountPercent;
+      delete sanitized.customDiscountAmount;
+      delete sanitized.customDiscountPercent;
+    }
+
     // Remove undefined values
     Object.keys(sanitized).forEach(
       (key) => sanitized[key] === undefined && delete sanitized[key]
     );
 
     return sanitized;
+  }
+
+  private paymentMethodIdCache = new Map<string, string>();
+
+  /**
+   * Prepare data for Prisma create operations (handle relations/mappings)
+   */
+  private async prepareCreateData(
+    data: Record<string, unknown>,
+    tableName: string
+  ): Promise<Record<string, unknown>> {
+    const prepared: Record<string, unknown> = { ...data };
+
+    const connectRelation = (
+      field: string,
+      relationName: string
+    ) => {
+      const value = prepared[field];
+      if (typeof value === 'string' && value.length > 0) {
+        prepared[relationName] = { connect: { id: value } };
+        delete prepared[field];
+      } else {
+        delete prepared[field];
+      }
+    };
+
+    if (tableName === 'OrderLineItem') {
+      connectRelation('orderId', 'order');
+      connectRelation('variantId', 'variant');
+
+      if (prepared.serialNumbers === null) {
+        delete prepared.serialNumbers;
+      } else if (Array.isArray(prepared.serialNumbers)) {
+        prepared.serialNumbers = { set: prepared.serialNumbers };
+      } else if (typeof prepared.serialNumbers === 'string') {
+        prepared.serialNumbers = { set: prepared.serialNumbers ? [prepared.serialNumbers] : [] };
+      }
+    } else if (tableName === 'OrderPayment') {
+      connectRelation('orderId', 'order');
+      const rawPaymentMethodId = prepared.paymentMethodId;
+      if (typeof rawPaymentMethodId === 'string' && rawPaymentMethodId.length > 0) {
+        const resolvedId = await this.resolvePaymentMethodId(rawPaymentMethodId);
+        prepared.paymentMethod = { connect: { id: resolvedId } };
+      }
+      delete prepared.paymentMethodId;
+    } else if (tableName === 'OrderDiscount') {
+      connectRelation('orderId', 'order');
+      connectRelation('discountId', 'discount');
+      connectRelation('appliedBy', 'appliedByUser');
+    }
+
+    return prepared;
+  }
+
+  private async ensureOrderLineItemVariantExists(
+    data: Record<string, unknown>,
+    recordId: string
+  ): Promise<{ success: boolean; message: string }> {
+    const getString = (value: unknown): string | undefined =>
+      typeof value === 'string' && value.length > 0 ? value : undefined;
+
+    const variantId = getString(data.variantId);
+    const sku = getString(data.sku) ?? getString(data.variantSku);
+
+    if (variantId) {
+      const variant = await prisma.productVariant.findUnique({
+        where: { id: variantId },
+        select: { id: true },
+      });
+      if (variant) {
+        return { success: true, message: '' };
+      }
+    }
+
+    if (sku) {
+      const variantBySku = await prisma.productVariant.findUnique({
+        where: { sku },
+        select: { id: true },
+      });
+      if (variantBySku) {
+        data.variantId = variantBySku.id;
+        return { success: true, message: '' };
+      }
+    }
+
+    const identifier = variantId || (sku ? `sku ${sku}` : 'unknown variant');
+    return {
+      success: false,
+      message: `Skipping OrderLineItem ${recordId}: ProductVariant ${identifier} not found on server.`,
+    };
+  }
+
+  /**
+   * Resolve paymentMethodId values coming from offline DB (may be numeric codes)
+   */
+  private async resolvePaymentMethodId(rawId: string): Promise<string> {
+    if (this.paymentMethodIdCache.has(rawId)) {
+      return this.paymentMethodIdCache.get(rawId)!;
+    }
+
+    const uuidRegex = /^[0-9a-fA-F-]{36}$/;
+    if (uuidRegex.test(rawId)) {
+      this.paymentMethodIdCache.set(rawId, rawId);
+      return rawId;
+    }
+
+    const numericCodeMap: Record<string, string> = {
+      '1': 'CASH',
+      '2': 'CARD',
+      '3': 'BANK_TRANSFER',
+      '4': 'CHECK',
+      '5': 'GIFT_CARD',
+      '6': 'STORE_CREDIT',
+      '7': 'ON_ACCOUNT',
+    };
+
+    const code = numericCodeMap[rawId] || rawId;
+
+    const paymentMethod = await prisma.paymentMethod.findFirst({
+      where: {
+        OR: [
+          { id: rawId },
+          { code },
+        ],
+      },
+    });
+
+    if (!paymentMethod) {
+      throw new Error(`Payment method not found for identifier: ${rawId}`);
+    }
+
+    this.paymentMethodIdCache.set(rawId, paymentMethod.id);
+    if (code !== rawId) {
+      this.paymentMethodIdCache.set(code, paymentMethod.id);
+    }
+
+    return paymentMethod.id;
   }
 
   /**
