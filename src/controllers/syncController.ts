@@ -89,6 +89,7 @@ export class SyncController {
         'TaxRate',
         'ExpenseAccount',
         'CashRegister',
+        'SalesPerson',
         'Customer',
         'CustomerAddress',
         'Product',

@@ -62,6 +62,7 @@ export class SyncService {
       TaxRate: prisma.taxRate,
       ExpenseAccount: prisma.expenseAccount,
       CashRegister: prisma.cashRegister,
+      SalesPerson: prisma.salesPerson,
       Customer: prisma.customer,
       CustomerAddress: prisma.customerAddress,
       Product: prisma.product,
@@ -204,6 +205,7 @@ export class SyncService {
       TaxRate: prisma.taxRate,
       ExpenseAccount: prisma.expenseAccount,
       CashRegister: prisma.cashRegister,
+      SalesPerson: prisma.salesPerson,
       Customer: prisma.customer,
       CustomerAddress: prisma.customerAddress,
       Product: prisma.product,
@@ -760,9 +762,8 @@ export class SyncService {
       delete sanitized.giftCardNumber;
     }
 
-    // Normalize OrderLineItem fields (server schema does not store salesperson/custom percents)
+    // Normalize OrderLineItem fields (server schema does not store custom percents)
     if (tableName === 'OrderLineItem') {
-      delete sanitized.salesPersonId;
       delete sanitized.lineDiscountPercent;
       delete sanitized.customDiscountAmount;
       delete sanitized.customDiscountPercent;
@@ -803,6 +804,7 @@ export class SyncService {
     if (tableName === 'OrderLineItem') {
       connectRelation('orderId', 'order');
       connectRelation('variantId', 'variant');
+      connectRelation('salesPersonId', 'salesPerson');
 
       if (prepared.serialNumbers === null) {
         delete prepared.serialNumbers;
@@ -811,6 +813,12 @@ export class SyncService {
       } else if (typeof prepared.serialNumbers === 'string') {
         prepared.serialNumbers = { set: prepared.serialNumbers ? [prepared.serialNumbers] : [] };
       }
+    } else if (tableName === 'SaleOrder') {
+      connectRelation('locationId', 'location');
+      connectRelation('customerId', 'customer');
+      connectRelation('cashierId', 'cashier');
+      connectRelation('salesPersonId', 'salesPerson');
+      connectRelation('shiftId', 'shift');
     } else if (tableName === 'OrderPayment') {
       connectRelation('orderId', 'order');
       const rawPaymentMethodId = prepared.paymentMethodId;
