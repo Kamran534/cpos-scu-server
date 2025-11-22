@@ -262,13 +262,15 @@ model ProductVariant {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  inventoryItems       InventoryItem[]
-  orderLineItems       OrderLineItem[]
-  serialNumbers        SerialNumber[]
-  barcodes             Barcode[]
-  returnLineItems      ReturnLineItem[]
-  stockAdjustmentLines StockAdjustmentLine[]
-  stockTransferLines   StockTransferLine[]
+  inventoryItems        InventoryItem[]
+  orderLineItems        OrderLineItem[]
+  serialNumbers         SerialNumber[]
+  barcodes              Barcode[]
+  returnLineItems       ReturnLineItem[]
+  stockAdjustmentLines  StockAdjustmentLine[]
+  stockTransferLines    StockTransferLine[]
+  returnedExchanges     ExchangeLineItem[]    @relation("ReturnedVariant")
+  exchangedForExchanges ExchangeLineItem[]    @relation("ExchangedVariant")
 
   @@index([productId])
   @@index([sku])
@@ -683,24 +685,55 @@ model ReturnLineItem {
   @@index([variantId])
 }
 
+enum ExchangeStatus {
+  Pending
+  Completed
+  Cancelled
+}
+
 model ExchangeOrder {
-  id                String    @id @default(uuid())
-  exchangeNumber    String    @unique
+  id                String         @id @default(uuid())
+  exchangeNumber    String         @unique
   originalOrderId   String
-  originalOrder     SaleOrder @relation("OriginalOrder", fields: [originalOrderId], references: [id])
+  originalOrder     SaleOrder      @relation("OriginalOrder", fields: [originalOrderId], references: [id])
   newOrderId        String
-  newOrder          SaleOrder @relation("NewOrder", fields: [newOrderId], references: [id])
-  priceDifference   Decimal   @db.Decimal(12, 2)
-  additionalPayment Decimal   @default(0) @db.Decimal(12, 2)
-  refundAmount      Decimal   @default(0) @db.Decimal(12, 2)
-  exchangeDate      DateTime  @default(now())
+  newOrder          SaleOrder      @relation("NewOrder", fields: [newOrderId], references: [id])
+  priceDifference   Decimal        @db.Decimal(12, 2)
+  additionalPayment Decimal        @default(0) @db.Decimal(12, 2)
+  refundAmount      Decimal        @default(0) @db.Decimal(12, 2)
+  exchangeDate      DateTime       @default(now())
   processedBy       String
-  processedByUser   User      @relation(fields: [processedBy], references: [id])
-  createdAt         DateTime  @default(now())
+  processedByUser   User           @relation(fields: [processedBy], references: [id])
+  status            ExchangeStatus @default(Pending)
+  notes             String?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  lineItems ExchangeLineItem[]
 
   @@index([exchangeNumber])
   @@index([originalOrderId])
   @@index([newOrderId])
+  @@index([status])
+}
+
+model ExchangeLineItem {
+  id                 String         @id @default(uuid())
+  exchangeId         String
+  exchange           ExchangeOrder  @relation(fields: [exchangeId], references: [id], onDelete: Cascade)
+  returnedVariantId  String
+  returnedVariant    ProductVariant @relation("ReturnedVariant", fields: [returnedVariantId], references: [id])
+  returnedQuantity   Int
+  returnedUnitPrice  Decimal        @db.Decimal(12, 2)
+  exchangedVariantId String
+  exchangedVariant   ProductVariant @relation("ExchangedVariant", fields: [exchangedVariantId], references: [id])
+  exchangedQuantity  Int
+  exchangedUnitPrice Decimal        @db.Decimal(12, 2)
+  priceDifference    Decimal        @db.Decimal(12, 2)
+
+  @@index([exchangeId])
+  @@index([returnedVariantId])
+  @@index([exchangedVariantId])
 }
 
 // ============================================
@@ -717,11 +750,22 @@ enum PaymentMethodType {
   OnAccount
 }
 
+enum Currency {
+  USD
+  EUR
+  GBP
+  PKR
+  INR
+  CAD
+  AUD
+}
+
 model PaymentMethod {
   id                    String            @id @default(uuid())
   code                  String            @unique
   name                  String
   type                  PaymentMethodType
+  currency              Currency          @default(USD)
   isActive              Boolean           @default(true)
   requiresAuthorization Boolean           @default(false)
   accountId             String?
@@ -1271,4 +1315,42 @@ model SystemSetting {
 
   @@index([key])
   @@index([category])
+}
+
+// ============================================
+// 13. STORE CONFIGURATION
+// ============================================
+
+enum ReturnPolicy {
+  NoReturns
+  ExchangeOnly
+  RefundAndExchange
+}
+
+model StoreConfig {
+  id                         String       @id @default(uuid())
+  organizationName           String
+  organizationCode           String       @unique
+  defaultCurrency            Currency     @default(USD)
+  returnPolicy               ReturnPolicy @default(RefundAndExchange)
+  allowReturns               Boolean      @default(true)
+  allowRefunds               Boolean      @default(true)
+  allowExchanges             Boolean      @default(true)
+  returnWindowDays           Int          @default(30) // Days allowed for returns
+  requireOriginalReceipt     Boolean      @default(true)
+  allowExchangeSameAmount    Boolean      @default(true) // Allow exchange for same amount
+  allowExchangeGreaterAmount Boolean      @default(true) // Allow exchange for greater amount with payment
+  allowExchangeLowerAmount   Boolean      @default(false) // Allow exchange for lower amount with refund
+  restockFeePercentage       Decimal      @default(0) @db.Decimal(5, 2)
+  taxId                      String?
+  registrationNumber         String?
+  contactEmail               String?
+  contactPhone               String?
+  address                    String?
+  logo                       String?
+  website                    String?
+  createdAt                  DateTime     @default(now())
+  updatedAt                  DateTime     @updatedAt
+
+  @@index([organizationCode])
 }

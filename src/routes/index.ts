@@ -10,6 +10,9 @@ import { parkedOrderRoutes } from './parkedOrderRoutes.js';
 import { promotionRoutes } from './promotionRoutes.js';
 import { paymentMethodRoutes } from './paymentMethodRoutes.js';
 import salesPersonRoutes from './salesPersonRoutes.js';
+import returnOrderRoutes from './returnOrderRoutes.js';
+import exchangeRoutes from './exchangeRoutes.js';
+import storeConfigRoutes from './storeConfigRoutes.js';
 import { config } from '../config/index.js';
 
 export const apiRouter = Router();
@@ -109,3 +112,6 @@ apiRouter.use('/parked-orders', parkedOrderRoutes);
 apiRouter.use('/payment-methods', paymentMethodRoutes);
 apiRouter.use('/promotions', promotionRoutes);
 apiRouter.use('/sales-persons', salesPersonRoutes);
+apiRouter.use('/returns', returnOrderRoutes);
+apiRouter.use('/exchanges', exchangeRoutes);
+apiRouter.use('/store-config', storeConfigRoutes);
