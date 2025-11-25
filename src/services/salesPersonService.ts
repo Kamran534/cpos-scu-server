@@ -4,9 +4,8 @@
  * Handles business logic for sales person operations
  */
 
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { Prisma } from '@prisma/client';
+import { getPrismaClient } from '../lib/prisma.js';
 
 export interface CreateSalesPersonInput {
   code: string;
@@ -42,6 +41,7 @@ export class SalesPersonService {
    * Create a new sales person
    */
   async createSalesPerson(input: CreateSalesPersonInput) {
+    const prisma = await getPrismaClient();
     const salesPerson = await prisma.salesPerson.create({
       data: {
         code: input.code,
@@ -62,9 +62,10 @@ export class SalesPersonService {
    * Get all sales persons with optional filtering
    */
   async getAllSalesPersons(options: SalesPersonSearchOptions = {}) {
+    const prisma = await getPrismaClient();
     const { search, isActive, limit = 100, offset = 0 } = options;
 
-    const where: any = {};
+    const where: Prisma.SalesPersonWhereInput = {};
 
     // Filter by active status
     if (isActive !== undefined) {
@@ -101,6 +102,7 @@ export class SalesPersonService {
    * Get a sales person by ID
    */
   async getSalesPersonById(id: string) {
+    const prisma = await getPrismaClient();
     const salesPerson = await prisma.salesPerson.findUnique({
       where: { id },
       include: {
@@ -120,6 +122,7 @@ export class SalesPersonService {
    * Get a sales person by code
    */
   async getSalesPersonByCode(code: string) {
+    const prisma = await getPrismaClient();
     const salesPerson = await prisma.salesPerson.findUnique({
       where: { code },
     });
@@ -131,6 +134,7 @@ export class SalesPersonService {
    * Update a sales person
    */
   async updateSalesPerson(id: string, input: UpdateSalesPersonInput) {
+    const prisma = await getPrismaClient();
     const salesPerson = await prisma.salesPerson.update({
       where: { id },
       data: {
@@ -153,6 +157,7 @@ export class SalesPersonService {
    * Delete a sales person (soft delete by setting isActive to false)
    */
   async deleteSalesPerson(id: string) {
+    const prisma = await getPrismaClient();
     // Check if sales person has any orders or line items
     const salesPerson = await prisma.salesPerson.findUnique({
       where: { id },
@@ -191,6 +196,7 @@ export class SalesPersonService {
    * Generate a unique sales person code
    */
   async generateCode(): Promise<string> {
+    const prisma = await getPrismaClient();
     const lastSalesPerson = await prisma.salesPerson.findFirst({
       orderBy: { code: 'desc' },
       where: {

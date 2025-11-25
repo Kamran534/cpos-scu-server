@@ -206,11 +206,11 @@ parkedOrderRoutes.get('/:id', async (req: Request, res: Response) => {
 parkedOrderRoutes.post('/:id/complete', async (req: Request, res: Response) => {
   try {
     const result = await ParkedOrderService.completeParkedOrder(req.params.id);
-    res.json({ success: true, ...result });
+    return res.json({ ...result, success: true });
   } catch (error: any) {
     console.error('Error completing parked order:', error);
     const statusCode = error.message.includes('not found') ? 404 : 400;
-    res.status(statusCode).json({ success: false, error: error.message });
+    return res.status(statusCode).json({ success: false, error: error.message });
   }
 });
 
@@ -237,11 +237,11 @@ parkedOrderRoutes.post('/:id/complete', async (req: Request, res: Response) => {
 parkedOrderRoutes.delete('/:id', async (req: Request, res: Response) => {
   try {
     const result = await ParkedOrderService.deleteParkedOrder(req.params.id);
-    res.json({ success: true, ...result });
+    return res.json({ ...result, success: true });
   } catch (error: any) {
     console.error('Error deleting parked order:', error);
     const statusCode = error.message.includes('not found') ? 404 : 400;
-    res.status(statusCode).json({ success: false, error: error.message });
+    return res.status(statusCode).json({ success: false, error: error.message });
   }
 });
 
@@ -256,7 +256,7 @@ parkedOrderRoutes.delete('/:id', async (req: Request, res: Response) => {
  *       200:
  *         description: List of expired parked orders
  */
-parkedOrderRoutes.get('/expired', async (req: Request, res: Response) => {
+parkedOrderRoutes.get('/expired', async (_req: Request, res: Response) => {
   try {
     const expiredOrders = await ParkedOrderService.getExpiredParkedOrders();
     res.json({ success: true, expiredOrders });

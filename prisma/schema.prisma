@@ -1342,6 +1342,7 @@ model StoreConfig {
   allowExchangeGreaterAmount Boolean      @default(true) // Allow exchange for greater amount with payment
   allowExchangeLowerAmount   Boolean      @default(false) // Allow exchange for lower amount with refund
   restockFeePercentage       Decimal      @default(0) @db.Decimal(5, 2)
+  requireLineItemSalesPerson Boolean      @default(false) // Require salesperson on each order line item
   taxId                      String?
   registrationNumber         String?
   contactEmail               String?

@@ -144,10 +144,10 @@ router.get('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Return order not found' });
     }
 
-    res.json(returnOrder);
+    return res.json(returnOrder);
   } catch (error) {
     console.error('Error fetching return order:', error);
-    res.status(500).json({ error: 'Failed to fetch return order' });
+    return res.status(500).json({ error: 'Failed to fetch return order' });
   }
 });
 
@@ -249,10 +249,10 @@ router.post('/', async (req, res) => {
       },
     });
 
-    res.status(201).json(returnOrder);
+    return res.status(201).json(returnOrder);
   } catch (error) {
     console.error('Error creating return order:', error);
-    res.status(500).json({ error: 'Failed to create return order' });
+    return res.status(500).json({ error: 'Failed to create return order' });
   }
 });
 
@@ -322,10 +322,10 @@ router.patch('/:id/status', async (req, res) => {
       }
     }
 
-    res.json(returnOrder);
+    return res.json(returnOrder);
   } catch (error) {
     console.error('Error updating return order status:', error);
-    res.status(500).json({ error: 'Failed to update return order status' });
+    return res.status(500).json({ error: 'Failed to update return order status' });
   }
 });
 

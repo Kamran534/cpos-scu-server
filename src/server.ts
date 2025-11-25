@@ -2,12 +2,12 @@ import http from 'http';
 import dotenv from 'dotenv';
 import { app } from './app.js';
 import { initSocket } from './config/socket.js';
-import { PrismaClient } from '@prisma/client';
 import { syncScheduler } from './services/syncScheduler.js';
 import { connectRabbitMQ } from './config/rabbitmq.js';
 import { config } from './config/index.js';
 import { SyncWorker } from './workers/SyncWorker.js';
 import { ensureDatabaseSchema } from './utils/ensureDatabaseSchema.js';
+import { prisma, testDatabaseConnection, disconnectPrisma } from './lib/prisma.js';
 
 // Load environment variables
 dotenv.config();
@@ -20,9 +20,6 @@ if (!config.databaseUrl) {
 }
 
 const PORT = config.port;
-
-// Create PrismaClient
-const prisma = new PrismaClient();
 
 // Create SyncWorker
 const syncWorker = new SyncWorker();
@@ -44,11 +41,15 @@ server.on('error', (error: NodeJS.ErrnoException) => {
   }
 });
 
-// Check database connection
+// Check database connection with retry logic
 async function checkDatabaseConnection(): Promise<boolean> {
   try {
-    await prisma.$connect();
-    await prisma.$queryRaw`SELECT 1`;
+    // Test connection with retry logic
+    const connected = await testDatabaseConnection(3, 2000);
+    if (!connected) {
+      return false;
+    }
+    
     await ensureDatabaseSchema(prisma);
     return true;
   } catch (error) {
@@ -168,7 +169,7 @@ process.on('SIGINT', async () => {
   
   // Close database connection
   console.log('   Closing database connection...');
-  await prisma.$disconnect();
+  await disconnectPrisma();
   
   // Close server
   server.close(() => {
@@ -188,7 +189,7 @@ process.on('SIGTERM', async () => {
   
   // Close database connection
   console.log('   Closing database connection...');
-  await prisma.$disconnect();
+  await disconnectPrisma();
   
   // Close server
   server.close(() => {

@@ -1,6 +1,5 @@
 import express from 'express';
-import { PrismaClient } from '@prisma/client';
-import { v4 as uuidv4 } from 'uuid';
+import { PrismaClient, Prisma } from '@prisma/client';
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -20,10 +19,16 @@ router.get('/', async (req, res) => {
     const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
     const take = parseInt(limit as string);
 
-    const where: any = {};
+    const where: Prisma.ExchangeOrderWhereInput = {};
 
-    if (status) where.status = status;
-    if (originalOrderId) where.originalOrderId = originalOrderId;
+    if (status && typeof status === 'string') {
+      where.status = {
+        equals: status as 'Pending' | 'Completed' | 'Cancelled',
+      };
+    }
+    if (originalOrderId && typeof originalOrderId === 'string') {
+      where.originalOrderId = originalOrderId;
+    }
 
     if (startDate || endDate) {
       where.exchangeDate = {};
@@ -81,7 +86,7 @@ router.get('/', async (req, res) => {
       prisma.exchangeOrder.count({ where }),
     ]);
 
-    res.json({
+    return res.json({
       data: exchanges,
       pagination: {
         page: parseInt(page as string),
@@ -92,7 +97,7 @@ router.get('/', async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching exchanges:', error);
-    res.status(500).json({ error: 'Failed to fetch exchanges' });
+    return res.status(500).json({ error: 'Failed to fetch exchanges' });
   }
 });
 
@@ -145,10 +150,10 @@ router.get('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Exchange order not found' });
     }
 
-    res.json(exchangeOrder);
+    return res.json(exchangeOrder);
   } catch (error) {
     console.error('Error fetching exchange order:', error);
-    res.status(500).json({ error: 'Failed to fetch exchange order' });
+    return res.status(500).json({ error: 'Failed to fetch exchange order' });
   }
 });
 
@@ -232,22 +237,33 @@ router.post('/', async (req, res) => {
     const exchangeCount = await prisma.exchangeOrder.count();
     const exchangeNumber = `EXC-${String(exchangeCount + 1).padStart(6, '0')}`;
 
+    // Calculate subtotal from line items
+    const subtotal = exchangeLineItems.reduce((sum, item) => {
+      return sum + (Number(item.exchangedUnitPrice) * item.exchangedQuantity);
+    }, 0);
+
     // Create new order for exchanged items
     const newOrder = await prisma.saleOrder.create({
       data: {
         orderNumber: `ORD-${String(Date.now()).padStart(10, '0')}`,
         customerId: originalOrder.customerId,
         locationId: originalOrder.locationId,
+        cashierId: processedBy || originalOrder.cashierId,
         salesPersonId: originalOrder.salesPersonId,
         orderDate: new Date(),
         status: 'Completed',
-        totalAmount: totalPriceDifference > 0 ? totalPriceDifference : 0,
+        subtotal: new Prisma.Decimal(subtotal),
+        taxAmount: new Prisma.Decimal(0),
+        totalAmount: new Prisma.Decimal(totalPriceDifference > 0 ? totalPriceDifference : 0),
+        amountDue: new Prisma.Decimal(totalPriceDifference > 0 ? totalPriceDifference : 0),
         lineItems: {
           create: exchangeLineItems.map(item => ({
             variantId: item.exchangedVariantId,
             quantity: item.exchangedQuantity,
             unitPrice: item.exchangedUnitPrice,
-            totalPrice: item.exchangedUnitPrice * item.exchangedQuantity,
+            lineTotal: new Prisma.Decimal(Number(item.exchangedUnitPrice) * item.exchangedQuantity),
+            lineDiscount: new Prisma.Decimal(0),
+            lineTax: new Prisma.Decimal(0),
           })),
         },
       },
@@ -293,10 +309,10 @@ router.post('/', async (req, res) => {
       },
     });
 
-    res.status(201).json(exchangeOrder);
+    return res.status(201).json(exchangeOrder);
   } catch (error) {
     console.error('Error creating exchange order:', error);
-    res.status(500).json({ error: 'Failed to create exchange order' });
+    return res.status(500).json({ error: 'Failed to create exchange order' });
   }
 });
 
@@ -344,10 +360,10 @@ router.patch('/:id', async (req, res) => {
       },
     });
 
-    res.json(updated);
+    return res.json(updated);
   } catch (error) {
     console.error('Error updating exchange order:', error);
-    res.status(500).json({ error: 'Failed to update exchange order' });
+    return res.status(500).json({ error: 'Failed to update exchange order' });
   }
 });
 
@@ -375,10 +391,10 @@ router.get('/order/:orderId', async (req, res) => {
       },
     });
 
-    res.json(exchanges);
+    return res.json(exchanges);
   } catch (error) {
     console.error('Error fetching order exchanges:', error);
-    res.status(500).json({ error: 'Failed to fetch order exchanges' });
+    return res.status(500).json({ error: 'Failed to fetch order exchanges' });
   }
 });
 

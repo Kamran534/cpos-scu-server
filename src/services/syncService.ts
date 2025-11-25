@@ -4,9 +4,8 @@
  * Handles synchronization between client SQLite and server PostgreSQL
  */
 
-import { PrismaClient, Prisma } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { Prisma } from '@prisma/client';
+import { prisma } from '../lib/prisma.js';
 
 // Type for Prisma delegate with common operations
 // Using a more flexible type to accommodate Prisma's complex generic types
@@ -83,6 +82,7 @@ export class SyncService {
       ReturnOrder: prisma.returnOrder,
       ReturnLineItem: prisma.returnLineItem,
       ExchangeOrder: prisma.exchangeOrder,
+      ExchangeLineItem: prisma.exchangeLineItem,
       GiftCard: prisma.giftCard,
       StoreCredit: prisma.storeCredit,
       Shift: prisma.shift,
@@ -96,6 +96,7 @@ export class SyncService {
       ParkedOrder: prisma.parkedOrder,
       AuditLog: prisma.auditLog,
       SystemSetting: prisma.systemSetting,
+      StoreConfig: prisma.storeConfig,
     } as unknown as Record<string, PrismaDelegate>;
 
     const model = modelMap[tableName];
@@ -130,6 +131,20 @@ export class SyncService {
           // Exclude immutable relation ID fields from update
         const sanitizedData = this.sanitizeData(data, tableName);
 
+        // Handle OrderLineItem serialNumbers - ensure it's an array for updates
+        if (tableName === 'OrderLineItem' && sanitizedData.serialNumbers !== undefined) {
+          if (typeof sanitizedData.serialNumbers === 'string') {
+            try {
+              sanitizedData.serialNumbers = JSON.parse(sanitizedData.serialNumbers);
+            } catch {
+              sanitizedData.serialNumbers = [];
+            }
+          }
+          if (!Array.isArray(sanitizedData.serialNumbers)) {
+            sanitizedData.serialNumbers = [];
+          }
+        }
+
         if (tableName === 'OrderLineItem') {
           const variantCheck = await this.ensureOrderLineItemVariantExists(
             sanitizedData,
@@ -151,6 +166,32 @@ export class SyncService {
         } else {
           // Create new record
           const sanitizedData = this.sanitizeData(data, tableName);
+          
+          // Validate required fields before creating
+          if (tableName === 'PaymentMethod') {
+            // PaymentMethod requires 'code' field
+            if (!sanitizedData.code || typeof sanitizedData.code !== 'string' || sanitizedData.code.trim() === '') {
+              // Try to generate code from name or use id as fallback
+              if (sanitizedData.name && typeof sanitizedData.name === 'string') {
+                sanitizedData.code = sanitizedData.name.toUpperCase().replace(/\s+/g, '_').substring(0, 20);
+              } else {
+                sanitizedData.code = `PM_${record.id.substring(0, 8)}`;
+              }
+              console.warn(`[SyncService] PaymentMethod ${record.id} missing code, generated: ${sanitizedData.code}`);
+            }
+            // PaymentMethod requires 'name' field
+            if (!sanitizedData.name || typeof sanitizedData.name !== 'string' || sanitizedData.name.trim() === '') {
+              result.errors.push(`PaymentMethod ${record.id} missing required 'name' field`);
+              console.warn(`[SyncService] PaymentMethod ${record.id} missing required 'name' field, skipping`);
+              continue;
+            }
+            // PaymentMethod requires 'type' field, default to 'Cash' if missing
+            if (!sanitizedData.type) {
+              sanitizedData.type = 'Cash';
+              console.warn(`[SyncService] PaymentMethod ${record.id} missing 'type', defaulting to 'Cash'`);
+            }
+          }
+          
           if (tableName === 'OrderLineItem') {
             const variantCheck = await this.ensureOrderLineItemVariantExists(
               sanitizedData,
@@ -226,6 +267,7 @@ export class SyncService {
       ReturnOrder: prisma.returnOrder,
       ReturnLineItem: prisma.returnLineItem,
       ExchangeOrder: prisma.exchangeOrder,
+      ExchangeLineItem: prisma.exchangeLineItem,
       GiftCard: prisma.giftCard,
       StoreCredit: prisma.storeCredit,
       Shift: prisma.shift,
@@ -239,6 +281,7 @@ export class SyncService {
       ParkedOrder: prisma.parkedOrder,
       AuditLog: prisma.auditLog,
       SystemSetting: prisma.systemSetting,
+      StoreConfig: prisma.storeConfig,
     } as unknown as Record<string, PrismaDelegate>;
 
     const model = modelMap[tableName];
@@ -274,6 +317,7 @@ export class SyncService {
       'StockAdjustmentLine', // No timestamp fields
       'StockTransferLine',   // No timestamp fields
       'ReturnLineItem',      // No timestamp fields
+      'ExchangeLineItem',    // No timestamp fields
     ];
     
     let timestampField: string;
@@ -323,7 +367,21 @@ export class SyncService {
         ...(include && { include }),
       })) as Array<Record<string, unknown>>;
     } catch (error) {
-      if (this.isMissingColumnError(error)) {
+      // Check if it's a validation error for unknown field in orderBy
+      if (this.isValidationError(error) && error.message?.includes('Unknown argument')) {
+        console.warn(
+          `[SyncService] Invalid orderBy field '${timestampField}' for table ${tableName}. Using 'id' instead.`,
+          error.message
+        );
+        // Retry with 'id' ordering
+        records = (await model.findMany({
+          where,
+          take: limit,
+          skip: offset,
+          orderBy: { id: 'asc' },
+          ...(include && { include }),
+        })) as Array<Record<string, unknown>>;
+      } else if (this.isMissingColumnError(error)) {
         console.warn(
           `[SyncService] Missing column detected for table ${tableName}. Falling back to raw query.`,
           error.meta
@@ -468,6 +526,14 @@ export class SyncService {
     );
   }
 
+  private isValidationError(
+    error: unknown
+  ): error is Prisma.PrismaClientValidationError & { message?: string } {
+    return (
+      error instanceof Prisma.PrismaClientValidationError
+    );
+  }
+
   private async fetchRecordsFallback(
     tableName: string,
     timestampField: string,
@@ -561,13 +627,20 @@ export class SyncService {
         // Check if this field is a boolean field by naming convention
         const keyLower = key.toLowerCase();
         const booleanFieldPrefixes = ['is', 'has', 'track', 'allow', 'enable', 'require', 'show'];
-        const booleanFieldSuffixes = ['taxable', 'active', 'deleted', 'enabled', 'required', 'available', 'visible'];
+        const booleanFieldSuffixes = ['taxable', 'active', 'deleted', 'enabled', 'required', 'visible'];
+        const booleanFieldNames = ['marketingOptIn', 'emailOptIn', 'smsOptIn', 'isRefunded', 'restockable'];
+
+        // Special case: quantityAvailable is an integer, not a boolean
+        if (key === 'quantityAvailable' && tableName === 'InventoryItem') {
+          // Keep as integer, don't convert
+          continue;
+        }
 
         const isBooleanField = booleanFieldPrefixes.some(prefix =>
           keyLower.startsWith(prefix)
         ) || booleanFieldSuffixes.some(suffix =>
           keyLower.endsWith(suffix)
-        );
+        ) || booleanFieldNames.includes(key);
 
         if (isBooleanField) {
           sanitized[key] = value === 1;
@@ -695,6 +768,20 @@ export class SyncService {
             }
           }
         }
+        // OrderLineItem.serialNumbers is an array
+        else if (tableName === 'OrderLineItem' && key === 'serialNumbers') {
+          try {
+            if (Array.isArray(sanitized[key])) {
+              // Already an array
+            } else if (typeof sanitized[key] === 'string') {
+              sanitized[key] = JSON.parse(sanitized[key] as string);
+            } else {
+              sanitized[key] = [];
+            }
+          } catch {
+            sanitized[key] = [];
+          }
+        }
         // Other JSON fields (Settings, etc.)
         else if (key.includes('Settings') || key.includes('settings') || key.includes('Hours') || key.includes('openingHours') || key.includes('taxSettings')) {
           try {
@@ -708,6 +795,29 @@ export class SyncService {
 
     // Normalize Product-specific fields and relations
     if (tableName === 'Product') {
+      // Remove fields that don't exist in Prisma Product model (these belong to ProductVariant)
+      // These fields are sometimes sent from client but don't exist in Product schema
+      const invalidProductFields = [
+        'sku',
+        'basePrice',
+        'costPrice',
+        'productType',
+        'barcode',
+        'upc',
+        'retailPrice',
+        'wholesalePrice',
+        'cost',
+        'compareAtPrice',
+        'weight',
+        'dimensions',
+        'variantName',
+        'options',
+        'position',
+      ];
+      invalidProductFields.forEach(field => {
+        delete sanitized[field];
+      });
+
       // Ensure tags is an array if provided, otherwise remove
       const tags = sanitized.tags;
       if (tags === null || tags === undefined) {

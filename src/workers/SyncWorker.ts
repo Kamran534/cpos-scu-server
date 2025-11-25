@@ -6,22 +6,22 @@
  */
 
 import type { ConsumeMessage, Channel } from 'amqplib';
-import { PrismaClient } from '@prisma/client';
 import { connectRabbitMQ } from '../config/rabbitmq.js';
 import { IntegrationOrchestrator } from '../core/services/IntegrationOrchestrator.js';
 import { TradeUnleashedIntegration } from '../integrations/tradeunleashed/TradeUnleashedIntegration.js';
 import { SyncJobMessage, SyncJobResult, QueueNames } from '../types/queue.types.js';
 import { IIntegrationService, ISyncOptions } from '../core/interfaces/IIntegrationService.js';
 import { config } from '../config/index.js';
+import { prisma } from '../lib/prisma.js';
 
 export class SyncWorker {
-  private prisma: PrismaClient;
+  private prisma = prisma;
   private queueName = QueueNames.SYNC_JOBS;
   private resultQueueName = QueueNames.SYNC_RESULTS;
   private isRunning = false;
 
   constructor() {
-    this.prisma = new PrismaClient();
+    // Use shared Prisma client instance
   }
 
   /**

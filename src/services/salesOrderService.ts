@@ -257,20 +257,48 @@ export class SalesOrderService {
           };
 
           for (const payment of data.payments) {
-            // Try to find payment method by ID first
+            // Try to find payment method by ID first (UUID)
             let paymentMethod = await tx.paymentMethod.findUnique({
               where: { id: payment.paymentMethodId },
             });
 
-            // If not found by ID, try to find by code (for numeric IDs from frontend)
+            // If not found by ID, try to find by code
             if (!paymentMethod) {
-              const code = paymentMethodIdToCode[payment.paymentMethodId];
+              let code: string | undefined;
+              
+              // Check if it's a numeric ID that maps to a code
+              if (paymentMethodIdToCode[payment.paymentMethodId]) {
+                code = paymentMethodIdToCode[payment.paymentMethodId];
+              } 
+              // Check if it's already a code (lowercase or uppercase)
+              else if (typeof payment.paymentMethodId === 'string') {
+                // Try uppercase version (e.g., "cash" -> "CASH")
+                const upperCode = payment.paymentMethodId.toUpperCase();
+                // Check if it matches a known code
+                if (Object.values(paymentMethodIdToCode).includes(upperCode)) {
+                  code = upperCode;
+                } else {
+                  // Try using the uppercase value directly as code
+                  code = upperCode;
+                }
+              }
+
               if (code) {
                 paymentMethod = await tx.paymentMethod.findUnique({
                   where: { code },
                 });
                 if (!paymentMethod) {
-                  console.error(`[SalesOrder] Payment method not found by code: ${code} (ID: ${payment.paymentMethodId})`);
+                  // Try case-insensitive search as fallback
+                  const allMethods = await tx.paymentMethod.findMany({
+                    where: { isActive: true },
+                  });
+                  paymentMethod = allMethods.find(
+                    pm => pm.code.toUpperCase() === code.toUpperCase()
+                  ) ?? null;
+                  
+                  if (!paymentMethod) {
+                    console.error(`[SalesOrder] Payment method not found by code: ${code} (ID: ${payment.paymentMethodId})`);
+                  }
                 }
               } else {
                 console.error(`[SalesOrder] No code mapping found for payment method ID: ${payment.paymentMethodId}`);
@@ -278,10 +306,11 @@ export class SalesOrderService {
             }
 
             if (!paymentMethod) {
+              const availableCodes = Object.values(paymentMethodIdToCode).join(', ');
               throw new Error(
                 `Payment method not found: ${payment.paymentMethodId}. ` +
-                `Available codes: ${Object.values(paymentMethodIdToCode).join(', ')}. ` +
-                `Tried to map to code: ${paymentMethodIdToCode[payment.paymentMethodId] || 'N/A'}`
+                `Available codes: ${availableCodes}. ` +
+                `Tried to map to code: ${paymentMethodIdToCode[payment.paymentMethodId] || payment.paymentMethodId.toUpperCase?.() || 'N/A'}`
               );
             }
 

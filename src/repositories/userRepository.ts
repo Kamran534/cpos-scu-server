@@ -1,6 +1,5 @@
-import { PrismaClient, type Prisma, type Role, type User } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { type Prisma, type Role, type User } from '@prisma/client';
+import { prisma } from '../lib/prisma.js';
 
 type BaseUserWritableFields = Pick<
   User,

@@ -1,11 +1,11 @@
 import { Router } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { getPrismaClient } from '../lib/prisma.js';
 
-const prisma = new PrismaClient();
 export const paymentMethodRoutes = Router();
 
 paymentMethodRoutes.get('/', async (req, res, next) => {
   try {
+    const prisma = await getPrismaClient();
     const isActiveParam = req.query.isActive as string | undefined;
     const isActive =
       typeof isActiveParam === 'string'
@@ -17,17 +17,18 @@ paymentMethodRoutes.get('/', async (req, res, next) => {
       orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
     });
 
-    res.json({
+    return res.json({
       success: true,
       paymentMethods,
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
 paymentMethodRoutes.get('/:id', async (req, res, next) => {
   try {
+    const prisma = await getPrismaClient();
     const paymentMethod = await prisma.paymentMethod.findUnique({
       where: { id: req.params.id },
     });
@@ -39,12 +40,12 @@ paymentMethodRoutes.get('/:id', async (req, res, next) => {
       });
     }
 
-    res.json({
+    return res.json({
       success: true,
       paymentMethod,
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 

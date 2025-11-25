@@ -143,7 +143,7 @@ promotionRoutes.get('/', async (req: Request, res: Response) => {
  *       200:
  *         description: List of active promotions
  */
-promotionRoutes.get('/active', async (req: Request, res: Response) => {
+promotionRoutes.get('/active', async (_req: Request, res: Response) => {
   try {
     const promotions = await PromotionService.getActivePromotions();
     res.json({ success: true, promotions });
@@ -180,10 +180,10 @@ promotionRoutes.get('/:id', async (req: Request, res: Response) => {
       return res.status(404).json({ success: false, error: 'Promotion not found' });
     }
 
-    res.json({ success: true, promotion });
+    return res.json({ success: true, promotion });
   } catch (error: any) {
     console.error('Error fetching promotion:', error);
-    res.status(400).json({ success: false, error: error.message });
+    return res.status(400).json({ success: false, error: error.message });
   }
 });
 
@@ -214,10 +214,10 @@ promotionRoutes.get('/code/:code', async (req: Request, res: Response) => {
       return res.status(404).json({ success: false, error: 'Promotion not found' });
     }
 
-    res.json({ success: true, promotion });
+    return res.json({ success: true, promotion });
   } catch (error: any) {
     console.error('Error fetching promotion:', error);
-    res.status(400).json({ success: false, error: error.message });
+    return res.status(400).json({ success: false, error: error.message });
   }
 });
 

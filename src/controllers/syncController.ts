@@ -123,6 +123,7 @@ export class SyncController {
         'ParkedOrder',
         'AuditLog',
         'SystemSetting',
+        'StoreConfig',
       ];
 
       // Get scheduler status

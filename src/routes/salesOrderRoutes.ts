@@ -184,10 +184,10 @@ salesOrderRoutes.get('/:id', async (req: Request, res: Response) => {
       return res.status(404).json({ success: false, error: 'Order not found' });
     }
 
-    res.json({ success: true, order });
+    return res.json({ success: true, order });
   } catch (error: any) {
     console.error('Error fetching order:', error);
-    res.status(400).json({ success: false, error: error.message });
+    return res.status(400).json({ success: false, error: error.message });
   }
 });
 
@@ -229,10 +229,10 @@ salesOrderRoutes.patch('/:id/status', async (req: Request, res: Response) => {
     }
 
     const order = await SalesOrderService.updateOrderStatus(req.params.id, status);
-    res.json({ success: true, order });
+    return res.json({ success: true, order });
   } catch (error: any) {
     console.error('Error updating order status:', error);
-    res.status(400).json({ success: false, error: error.message });
+    return res.status(400).json({ success: false, error: error.message });
   }
 });
 
@@ -284,10 +284,10 @@ salesOrderRoutes.post('/:id/payment', async (req: Request, res: Response) => {
       amount
     );
 
-    res.status(201).json({ success: true, payment });
+    return res.status(201).json({ success: true, payment });
   } catch (error: any) {
     console.error('Error adding payment:', error);
-    res.status(400).json({ success: false, error: error.message });
+    return res.status(400).json({ success: false, error: error.message });
   }
 });
 
@@ -327,10 +327,10 @@ salesOrderRoutes.post('/validate-coupon', async (req: Request, res: Response) =>
     }
 
     const result = await SalesOrderService.validateCoupon(couponCode, customerId);
-    res.json({ success: true, validation: result });
+    return res.json({ success: true, validation: result });
   } catch (error: any) {
     console.error('Error validating coupon:', error);
-    res.status(400).json({ success: false, error: error.message });
+    return res.status(400).json({ success: false, error: error.message });
   }
 });
 

@@ -5,7 +5,7 @@ const router = express.Router();
 const prisma = new PrismaClient();
 
 // GET /api/store-config - Get store configuration
-router.get('/', async (req, res) => {
+router.get('/', async (_req, res) => {
   try {
     const storeConfig = await prisma.storeConfig.findFirst();
 
@@ -13,10 +13,10 @@ router.get('/', async (req, res) => {
       return res.status(404).json({ error: 'Store configuration not found' });
     }
 
-    res.json(storeConfig);
+    return res.json(storeConfig);
   } catch (error) {
     console.error('Error fetching store config:', error);
-    res.status(500).json({ error: 'Failed to fetch store configuration' });
+    return res.status(500).json({ error: 'Failed to fetch store configuration' });
   }
 });
 
@@ -33,10 +33,10 @@ router.get('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Store configuration not found' });
     }
 
-    res.json(storeConfig);
+    return res.json(storeConfig);
   } catch (error) {
     console.error('Error fetching store config:', error);
-    res.status(500).json({ error: 'Failed to fetch store configuration' });
+    return res.status(500).json({ error: 'Failed to fetch store configuration' });
   }
 });
 
@@ -97,10 +97,10 @@ router.post('/', async (req, res) => {
       },
     });
 
-    res.status(201).json(storeConfig);
+    return res.status(201).json(storeConfig);
   } catch (error) {
     console.error('Error creating store config:', error);
-    res.status(500).json({ error: 'Failed to create store configuration' });
+    return res.status(500).json({ error: 'Failed to create store configuration' });
   }
 });
 
@@ -165,10 +165,10 @@ router.put('/:id', async (req, res) => {
       },
     });
 
-    res.json(updated);
+    return res.json(updated);
   } catch (error) {
     console.error('Error updating store config:', error);
-    res.status(500).json({ error: 'Failed to update store configuration' });
+    return res.status(500).json({ error: 'Failed to update store configuration' });
   }
 });
 
@@ -191,10 +191,10 @@ router.patch('/:id', async (req, res) => {
       data: updateData,
     });
 
-    res.json(updated);
+    return res.json(updated);
   } catch (error) {
     console.error('Error updating store config:', error);
-    res.status(500).json({ error: 'Failed to update store configuration' });
+    return res.status(500).json({ error: 'Failed to update store configuration' });
   }
 });
 
