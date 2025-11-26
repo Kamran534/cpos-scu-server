@@ -90,6 +90,8 @@ export interface LineItemCalculation {
   unitPrice: number;
   lineSubtotal: number;
   saleDiscount: number;
+  saleDiscountType?: 'amount' | 'percent';
+  saleDiscountPercent?: number;
   customDiscount: number;
   totalDiscount: number;
   lineTotal: number;
@@ -219,6 +221,10 @@ export class SalesOrderService {
               quantity: item.quantity,
               unitPrice: new Prisma.Decimal(item.unitPrice),
               lineDiscount: new Prisma.Decimal(item.calculation.totalDiscount),
+              lineDiscountType: item.calculation.saleDiscountType,
+              lineDiscountPercent: item.calculation.saleDiscountPercent
+                ? new Prisma.Decimal(item.calculation.saleDiscountPercent)
+                : null,
               lineTax: new Prisma.Decimal(0), // TODO: Implement tax calculation
               lineTotal: new Prisma.Decimal(item.calculation.lineTotal),
               notes: item.notes,
@@ -388,11 +394,17 @@ export class SalesOrderService {
 
       // Calculate sale discount (line-level)
       let saleDiscount = 0;
+      let saleDiscountType: 'amount' | 'percent' | undefined;
+      let saleDiscountPercent: number | undefined;
+
       if (item.saleDiscount) {
         if (item.saleDiscount.amount) {
           saleDiscount = item.saleDiscount.amount;
+          saleDiscountType = 'amount';
         } else if (item.saleDiscount.percent) {
           saleDiscount = (lineSubtotal * item.saleDiscount.percent) / 100;
+          saleDiscountType = 'percent';
+          saleDiscountPercent = item.saleDiscount.percent;
         }
       }
 
@@ -415,6 +427,8 @@ export class SalesOrderService {
         unitPrice: item.unitPrice,
         lineSubtotal,
         saleDiscount,
+        saleDiscountType,
+        saleDiscountPercent,
         customDiscount,
         totalDiscount,
         lineTotal,

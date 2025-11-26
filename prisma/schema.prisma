@@ -567,11 +567,13 @@ model OrderLineItem {
   salesPersonId String?
   salesPerson   SalesPerson?    @relation("LineItemSalesPerson", fields: [salesPersonId], references: [id])
 
-  quantity         Int
-  unitPrice        Decimal  @db.Decimal(12, 2)
-  lineDiscount     Decimal  @default(0) @db.Decimal(12, 2)
-  lineTax          Decimal  @default(0) @db.Decimal(12, 2)
-  lineTotal        Decimal  @db.Decimal(12, 2)
+  quantity            Int
+  unitPrice           Decimal  @db.Decimal(12, 2)
+  lineDiscount        Decimal  @default(0) @db.Decimal(12, 2)
+  lineDiscountType    String?  // 'amount' or 'percent'
+  lineDiscountPercent Decimal? @db.Decimal(5, 2) // Store original percent if discount was percentage-based
+  lineTax             Decimal  @default(0) @db.Decimal(12, 2)
+  lineTotal           Decimal  @db.Decimal(12, 2)
   cost             Decimal? @db.Decimal(12, 2)
   isRefunded       Boolean  @default(false)
   refundedQuantity Int      @default(0)
