@@ -25,7 +25,12 @@
     "sync:tu": "tsx src/scripts/sync-tradeunleashed.ts",
     "sync:tu:test": "tsx src/scripts/sync-tradeunleashed.ts -- --test",
     "worker:sync": "tsx src/scripts/start-sync-worker.ts",
-    "test:tu-connection": "tsx src/scripts/test-tradeunleashed-connection.ts"
+    "test:tu-connection": "tsx src/scripts/test-tradeunleashed-connection.ts",
+    "db:start": "docker-compose up -d",
+    "db:stop": "docker-compose down",
+    "db:reset": "docker-compose down -v && docker-compose up -d",
+    "db:logs": "docker-compose logs -f postgres",
+    "db:setup": "npm run db:start && npm run prisma:migrate:deploy && npm run prisma:seed"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
