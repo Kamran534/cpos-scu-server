@@ -20,7 +20,6 @@
     "prisma:studio": "prisma studio",
     "prisma:format": "prisma format",
     "prisma:validate": "prisma validate",
-    "prisma:seed": "tsx prisma/seed.ts",
     "postinstall": "prisma generate",
     "sync:tu": "tsx src/scripts/sync-tradeunleashed.ts",
     "sync:tu:test": "tsx src/scripts/sync-tradeunleashed.ts -- --test",
@@ -30,10 +29,9 @@
     "db:stop": "docker-compose down",
     "db:reset": "docker-compose down -v && docker-compose up -d",
     "db:logs": "docker-compose logs -f postgres",
-    "db:setup": "npm run db:start && npm run prisma:migrate:deploy && npm run prisma:seed"
-  },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
+    "db:setup": "npm run db:start && npm run prisma:migrate:deploy",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down -v"
   },
   "keywords": [
     "pos",

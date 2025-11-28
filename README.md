@@ -433,9 +433,45 @@ Ensure you have the following installed:
 
 - **Node.js** >= 18.0.0
 - **npm** >= 9.0.0
-- **PostgreSQL** >= 14.0
-- **Docker** (optional, for RabbitMQ)
+- **Docker Desktop** (for PostgreSQL and RabbitMQ)
 - **Git**
+
+### Quick Start (Automated Setup)
+
+For the fastest setup, use the automated setup scripts:
+
+**Windows (PowerShell - Recommended):**
+```powershell
+# 1. Clone and navigate to the project
+git clone <repository-url>
+cd pos-server
+
+# 2. Install dependencies
+npm install
+
+# 3. Copy environment file
+Copy-Item .env.example .env
+
+# 4. Run the automated setup script
+.\setup-local.ps1
+```
+
+**Windows (Command Prompt):**
+```batch
+# Run the batch script
+setup-local.bat
+```
+
+The automated setup scripts will:
+- ✅ Verify Docker is running
+- ✅ Start PostgreSQL and RabbitMQ containers
+- ✅ Wait for services to be ready
+- ✅ Apply database migrations
+- ✅ Display connection information
+
+### Manual Setup
+
+If you prefer manual setup or need more control:
 
 ### Step 1: Clone the Repository
 
@@ -500,7 +536,24 @@ CORS_ORIGIN=http://localhost:3000
 SOCKET_PORT=4001
 ```
 
-### Step 4: Set Up Database
+### Step 4: Set Up Database and Services
+
+**Option A: Using Docker Compose (Recommended)**
+
+The project includes a `docker-compose.yml` file that sets up both PostgreSQL and RabbitMQ:
+
+```bash
+# Start all services (PostgreSQL and RabbitMQ)
+docker-compose up -d
+
+# Apply database migrations
+npx prisma migrate deploy
+
+# (Optional) Seed database with demo data
+npm run seed
+```
+
+**Option B: Manual Database Setup**
 
 ```bash
 # Generate Prisma client
@@ -513,9 +566,11 @@ npx prisma migrate dev
 npm run seed
 ```
 
-### Step 5: Set Up RabbitMQ
+### Step 5: Set Up RabbitMQ (Manual)
 
-**Option A: Using Docker (Recommended)**
+**Only needed if not using Docker Compose**
+
+**Option A: Using Docker**
 
 ```bash
 docker run -d --name rabbitmq \
