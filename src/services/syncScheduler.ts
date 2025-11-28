@@ -9,6 +9,21 @@
 
 import cron from 'node-cron';
 import { SyncQueueService } from './SyncQueueService.js';
+import { orgAccountSettingService } from './orgAccountSettingService.js';
+import { tradeUnleashedUserRoleService } from './tradeUnleashedUserRoleService.js';
+import { tradeUnleashedFacilityRoleService } from './tradeUnleashedFacilityRoleService.js';
+import { tradeUnleashedPartyRoleService } from './tradeUnleashedPartyRoleService.js';
+import { posSessionService } from './posSessionService.js';
+import { saleTypeService } from './saleTypeService.js';
+import { orderAdjustmentTypeService } from './orderAdjustmentTypeService.js';
+import { orderRoleTypeService } from './orderRoleTypeService.js';
+import { orderStatusTypeService } from './orderStatusTypeService.js';
+import { invoiceItemTypeService } from './invoiceItemTypeService.js';
+import { paymentTypeService } from './paymentTypeService.js';
+import { tradePaymentMethodService } from './tradePaymentMethodService.js';
+import { contactMechanismTypeService } from './contactMechanismTypeService.js';
+import { partyRoleTypeService } from './partyRoleTypeService.js';
+import { partyRelationshipTypeService } from './partyRelationshipTypeService.js';
 import { config } from '../config/index.js';
 
 export interface SyncResult {
@@ -113,6 +128,201 @@ class SyncScheduler {
       });
       console.log(`[SyncScheduler] ✓ Customer sync job queued: ${customerJob.jobId}`);
 
+      await orgAccountSettingService
+        .syncIfNewIds()
+        .then((result) => {
+          if (result.skipped) {
+            console.log('[SyncScheduler] Org account settings up to date (no new IDs)');
+          } else {
+            console.log('[SyncScheduler] ✓ Org account settings synced (empty or new IDs found)');
+          }
+        })
+        .catch((error) => {
+          console.error('[SyncScheduler] Failed to evaluate org account settings sync:', error);
+        });
+
+      await tradeUnleashedUserRoleService
+        .syncIfNewIds()
+        .then((result) => {
+          if (result.skipped) {
+            console.log('[SyncScheduler] User roles up to date (no new IDs)');
+          } else {
+            console.log('[SyncScheduler] ✓ User roles synced (empty or new IDs found)');
+          }
+        })
+        .catch((error) => {
+          console.error('[SyncScheduler] Failed to evaluate user roles sync:', error);
+        });
+
+      await tradeUnleashedFacilityRoleService
+        .syncIfNewIds()
+        .then((result) => {
+          if (result.skipped) {
+            console.log('[SyncScheduler] Facility roles up to date (no new IDs)');
+          } else {
+            console.log('[SyncScheduler] ✓ Facility roles synced (empty or new IDs found)');
+          }
+        })
+        .catch((error) => {
+          console.error('[SyncScheduler] Failed to evaluate facility roles sync:', error);
+        });
+
+      await tradeUnleashedPartyRoleService
+        .syncIfNewIds()
+        .then((result) => {
+          if (result.skipped) {
+            console.log('[SyncScheduler] Party roles up to date (no new IDs)');
+          } else {
+            console.log('[SyncScheduler] ✓ Party roles synced (empty or new IDs found)');
+          }
+        })
+        .catch((error) => {
+          console.error('[SyncScheduler] Failed to evaluate party roles sync:', error);
+        });
+
+      await partyRoleTypeService
+        .syncIfNewIds()
+        .then((result) => {
+          if (result.skipped) {
+            console.log('[SyncScheduler] Party role types up to date (no new IDs)');
+          } else {
+            console.log('[SyncScheduler] ✓ Party role types synced (empty or new IDs found)');
+          }
+        })
+        .catch((error) => {
+          console.error('[SyncScheduler] Failed to evaluate party role types sync:', error);
+        });
+
+      await posSessionService
+        .syncIfNewIds()
+        .then((result) => {
+          if (result.skipped) {
+            console.log('[SyncScheduler] POS sessions up to date (no new IDs)');
+          } else {
+            console.log('[SyncScheduler] ✓ POS sessions synced (empty or new IDs found)');
+          }
+        })
+        .catch((error) => {
+          console.error('[SyncScheduler] Failed to evaluate POS session sync:', error);
+        });
+
+      await saleTypeService
+        .syncIfNewIds()
+        .then((result) => {
+          if (result.skipped) {
+            console.log('[SyncScheduler] Sale types up to date (no new IDs)');
+          } else {
+            console.log('[SyncScheduler] ✓ Sale types synced (empty or new IDs found)');
+          }
+        })
+        .catch((error) => {
+          console.error('[SyncScheduler] Failed to evaluate sale types sync:', error);
+        });
+
+      await orderAdjustmentTypeService
+        .syncIfNewIds()
+        .then((result) => {
+          if (result.skipped) {
+            console.log('[SyncScheduler] Order adjustment types up to date (no new IDs)');
+          } else {
+            console.log('[SyncScheduler] ✓ Order adjustment types synced (empty or new IDs found)');
+          }
+        })
+        .catch((error) => {
+          console.error('[SyncScheduler] Failed to evaluate order adjustment types sync:', error);
+        });
+
+      await orderRoleTypeService
+        .syncIfNewIds()
+        .then((result) => {
+          if (result.skipped) {
+            console.log('[SyncScheduler] Order role types up to date (no new IDs)');
+          } else {
+            console.log('[SyncScheduler] ✓ Order role types synced (empty or new IDs found)');
+          }
+        })
+        .catch((error) => {
+          console.error('[SyncScheduler] Failed to evaluate order role types sync:', error);
+        });
+
+      await orderStatusTypeService
+        .syncIfNewIds()
+        .then((result) => {
+          if (result.skipped) {
+            console.log('[SyncScheduler] Order status types up to date (no new IDs)');
+          } else {
+            console.log('[SyncScheduler] ✓ Order status types synced (empty or new IDs found)');
+          }
+        })
+        .catch((error) => {
+          console.error('[SyncScheduler] Failed to evaluate order status types sync:', error);
+        });
+
+      await invoiceItemTypeService
+        .syncIfNewIds()
+        .then((result) => {
+          if (result.skipped) {
+            console.log('[SyncScheduler] Invoice item types up to date (no new IDs)');
+          } else {
+            console.log('[SyncScheduler] ✓ Invoice item types synced (empty or new IDs found)');
+          }
+        })
+        .catch((error) => {
+          console.error('[SyncScheduler] Failed to evaluate invoice item types sync:', error);
+        });
+
+      await paymentTypeService
+        .syncIfNewIds()
+        .then((result) => {
+          if (result.skipped) {
+            console.log('[SyncScheduler] Payment types up to date (no new IDs)');
+          } else {
+            console.log('[SyncScheduler] ✓ Payment types synced (empty or new IDs found)');
+          }
+        })
+        .catch((error) => {
+          console.error('[SyncScheduler] Failed to evaluate payment types sync:', error);
+        });
+
+      await tradePaymentMethodService
+        .syncIfNewIds()
+        .then((result) => {
+          if (result.skipped) {
+            console.log('[SyncScheduler] Payment methods up to date (no new IDs)');
+          } else {
+            console.log('[SyncScheduler] ✓ Payment methods synced (empty or new IDs found)');
+          }
+        })
+        .catch((error) => {
+          console.error('[SyncScheduler] Failed to evaluate payment methods sync:', error);
+        });
+
+      await contactMechanismTypeService
+        .syncIfNewIds()
+        .then((result) => {
+          if (result.skipped) {
+            console.log('[SyncScheduler] Contact mechanism types up to date (no new IDs)');
+          } else {
+            console.log('[SyncScheduler] ✓ Contact mechanism types synced (empty or new IDs found)');
+          }
+        })
+        .catch((error) => {
+          console.error('[SyncScheduler] Failed to evaluate contact mechanism types sync:', error);
+        });
+
+      await partyRelationshipTypeService
+        .syncIfNewIds()
+        .then((result) => {
+          if (result.skipped) {
+            console.log('[SyncScheduler] Party relationship types up to date (no new IDs)');
+          } else {
+            console.log('[SyncScheduler] ✓ Party relationship types synced (empty or new IDs found)');
+          }
+        })
+        .catch((error) => {
+          console.error('[SyncScheduler] Failed to evaluate party relationship types sync:', error);
+        });
+
       const endTime = new Date();
       const duration = endTime.getTime() - startTime.getTime();
 
@@ -164,6 +374,117 @@ class SyncScheduler {
       });
 
       this.lastSyncTime = new Date();
+      try {
+        await orgAccountSettingService.syncFromTradeUnleashed();
+        console.log('[SyncScheduler] ✓ Org account settings synced during manual trigger');
+      } catch (error) {
+        console.error('[SyncScheduler] Failed to sync org account settings during manual trigger:', error);
+      }
+
+      try {
+        await tradeUnleashedUserRoleService.syncFromTradeUnleashed();
+        console.log('[SyncScheduler] ✓ User roles synced during manual trigger');
+      } catch (error) {
+        console.error('[SyncScheduler] Failed to sync user roles during manual trigger:', error);
+      }
+
+      try {
+        await tradeUnleashedFacilityRoleService.syncFromTradeUnleashed();
+        console.log('[SyncScheduler] ✓ Facility roles synced during manual trigger');
+      } catch (error) {
+        console.error('[SyncScheduler] Failed to sync facility roles during manual trigger:', error);
+      }
+
+      try {
+        await tradeUnleashedPartyRoleService.syncFromTradeUnleashed();
+        console.log('[SyncScheduler] ✓ Party roles synced during manual trigger');
+      } catch (error) {
+        console.error('[SyncScheduler] Failed to sync party roles during manual trigger:', error);
+      }
+
+      try {
+        await partyRoleTypeService.syncFromTradeUnleashed();
+        console.log('[SyncScheduler] ✓ Party role types synced during manual trigger');
+      } catch (error) {
+        console.error('[SyncScheduler] Failed to sync party role types during manual trigger:', error);
+      }
+
+      try {
+        await posSessionService.syncFromTradeUnleashed({ currentSession: true });
+        console.log('[SyncScheduler] ✓ POS sessions synced during manual trigger');
+      } catch (error) {
+        console.error('[SyncScheduler] Failed to sync POS sessions during manual trigger:', error);
+      }
+
+      try {
+        await saleTypeService.syncFromTradeUnleashed();
+        console.log('[SyncScheduler] ✓ Sale types synced during manual trigger');
+      } catch (error) {
+        console.error('[SyncScheduler] Failed to sync sale types during manual trigger:', error);
+      }
+
+      try {
+        await orderAdjustmentTypeService.syncFromTradeUnleashed();
+        console.log('[SyncScheduler] ✓ Order adjustment types synced during manual trigger');
+      } catch (error) {
+        console.error('[SyncScheduler] Failed to sync order adjustment types during manual trigger:', error);
+      }
+
+      try {
+        await orderRoleTypeService.syncFromTradeUnleashed();
+        console.log('[SyncScheduler] ✓ Order role types synced during manual trigger');
+      } catch (error) {
+        console.error('[SyncScheduler] Failed to sync order role types during manual trigger:', error);
+      }
+
+      try {
+        await orderStatusTypeService.syncFromTradeUnleashed();
+        console.log('[SyncScheduler] ✓ Order status types synced during manual trigger');
+      } catch (error) {
+        console.error('[SyncScheduler] Failed to sync order status types during manual trigger:', error);
+      }
+
+      try {
+        await invoiceItemTypeService.syncFromTradeUnleashed();
+        console.log('[SyncScheduler] ✓ Invoice item types synced during manual trigger');
+      } catch (error) {
+        console.error('[SyncScheduler] Failed to sync invoice item types during manual trigger:', error);
+      }
+
+      try {
+        await paymentTypeService.syncFromTradeUnleashed();
+        console.log('[SyncScheduler] ✓ Payment types synced during manual trigger');
+      } catch (error) {
+        console.error('[SyncScheduler] Failed to sync payment types during manual trigger:', error);
+      }
+
+      try {
+        await tradePaymentMethodService.syncFromTradeUnleashed();
+        console.log('[SyncScheduler] ✓ Payment methods synced during manual trigger');
+      } catch (error) {
+        console.error('[SyncScheduler] Failed to sync payment methods during manual trigger:', error);
+      }
+
+      try {
+        await contactMechanismTypeService.syncFromTradeUnleashed();
+        console.log('[SyncScheduler] ✓ Contact mechanism types synced during manual trigger');
+      } catch (error) {
+        console.error('[SyncScheduler] Failed to sync contact mechanism types during manual trigger:', error);
+      }
+
+      try {
+        await partyRelationshipTypeService.syncFromTradeUnleashed();
+        console.log('[SyncScheduler] ✓ Party relationship types synced during manual trigger');
+      } catch (error) {
+        console.error('[SyncScheduler] Failed to sync party relationship types during manual trigger:', error);
+      }
+
+      try {
+        await partyRoleTypeService.syncFromTradeUnleashed();
+        console.log('[SyncScheduler] ✓ Party role types synced during manual trigger');
+      } catch (error) {
+        console.error('[SyncScheduler] Failed to sync party role types during manual trigger:', error);
+      }
       this.isRunning = false;
 
       console.log('[SyncScheduler] ✅ Manual sync jobs queued successfully');

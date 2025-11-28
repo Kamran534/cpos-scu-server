@@ -8,6 +8,20 @@ import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.js';
 import { syncService, SyncRecord } from '../services/syncService.js';
 import { syncScheduler } from '../services/syncScheduler.js';
+import { orgAccountSettingService } from '../services/orgAccountSettingService.js';
+import { tradeUnleashedUserRoleService } from '../services/tradeUnleashedUserRoleService.js';
+import { tradeUnleashedFacilityRoleService } from '../services/tradeUnleashedFacilityRoleService.js';
+import { tradeUnleashedPartyRoleService } from '../services/tradeUnleashedPartyRoleService.js';
+import { posSessionService } from '../services/posSessionService.js';
+import { saleTypeService } from '../services/saleTypeService.js';
+import { orderAdjustmentTypeService } from '../services/orderAdjustmentTypeService.js';
+import { orderRoleTypeService } from '../services/orderRoleTypeService.js';
+import { orderStatusTypeService } from '../services/orderStatusTypeService.js';
+import { invoiceItemTypeService } from '../services/invoiceItemTypeService.js';
+import { paymentTypeService } from '../services/paymentTypeService.js';
+import { tradePaymentMethodService } from '../services/tradePaymentMethodService.js';
+import { contactMechanismTypeService } from '../services/contactMechanismTypeService.js';
+import { partyRelationshipTypeService } from '../services/partyRelationshipTypeService.js';
 
 export class SyncController {
   /**
@@ -269,6 +283,103 @@ export class SyncController {
       const result = await syncScheduler.triggerManualIntegrationSync();
 
       if (result.success) {
+        try {
+          await orgAccountSettingService.syncFromTradeUnleashed();
+          console.log('[SyncController] ✓ Org account settings synced via manual integration trigger');
+        } catch (error) {
+          console.error('[SyncController] Org account settings sync failed during manual trigger:', error);
+        }
+
+        try {
+          await tradeUnleashedUserRoleService.syncFromTradeUnleashed();
+          console.log('[SyncController] ✓ User roles synced via manual integration trigger');
+        } catch (error) {
+          console.error('[SyncController] User roles sync failed during manual trigger:', error);
+        }
+
+        try {
+          await tradeUnleashedFacilityRoleService.syncFromTradeUnleashed();
+          console.log('[SyncController] ✓ Facility roles synced via manual integration trigger');
+        } catch (error) {
+          console.error('[SyncController] Facility roles sync failed during manual trigger:', error);
+        }
+
+        try {
+          await tradeUnleashedPartyRoleService.syncFromTradeUnleashed();
+          console.log('[SyncController] ✓ Party roles synced via manual integration trigger');
+        } catch (error) {
+          console.error('[SyncController] Party roles sync failed during manual trigger:', error);
+        }
+
+        try {
+          await posSessionService.syncFromTradeUnleashed({ currentSession: true });
+          console.log('[SyncController] ✓ POS sessions synced via manual integration trigger');
+        } catch (error) {
+          console.error('[SyncController] POS sessions sync failed during manual trigger:', error);
+        }
+
+        try {
+          await saleTypeService.syncFromTradeUnleashed();
+          console.log('[SyncController] ✓ Sale types synced via manual integration trigger');
+        } catch (error) {
+          console.error('[SyncController] Sale types sync failed during manual trigger:', error);
+        }
+
+        try {
+          await orderAdjustmentTypeService.syncFromTradeUnleashed();
+          console.log('[SyncController] ✓ Order adjustment types synced via manual integration trigger');
+        } catch (error) {
+          console.error('[SyncController] Order adjustment types sync failed during manual trigger:', error);
+        }
+
+        try {
+          await orderRoleTypeService.syncFromTradeUnleashed();
+          console.log('[SyncController] ✓ Order role types synced via manual integration trigger');
+        } catch (error) {
+          console.error('[SyncController] Order role types sync failed during manual trigger:', error);
+        }
+
+        try {
+          await orderStatusTypeService.syncFromTradeUnleashed();
+          console.log('[SyncController] ✓ Order status types synced via manual integration trigger');
+        } catch (error) {
+          console.error('[SyncController] Order status types sync failed during manual trigger:', error);
+        }
+
+        try {
+          await invoiceItemTypeService.syncFromTradeUnleashed();
+          console.log('[SyncController] ✓ Invoice item types synced via manual integration trigger');
+        } catch (error) {
+          console.error('[SyncController] Invoice item types sync failed during manual trigger:', error);
+        }
+
+        try {
+          await paymentTypeService.syncFromTradeUnleashed();
+          console.log('[SyncController] ✓ Payment types synced via manual integration trigger');
+        } catch (error) {
+          console.error('[SyncController] Payment types sync failed during manual trigger:', error);
+        }
+
+        try {
+          await tradePaymentMethodService.syncFromTradeUnleashed();
+          console.log('[SyncController] ✓ Payment methods synced via manual integration trigger');
+        } catch (error) {
+          console.error('[SyncController] Payment methods sync failed during manual trigger:', error);
+        }
+
+        try {
+          await contactMechanismTypeService.syncFromTradeUnleashed();
+          console.log('[SyncController] ✓ Contact mechanism types synced via manual integration trigger');
+        } catch (error) {
+          console.error('[SyncController] Contact mechanism types sync failed during manual trigger:', error);
+        }
+
+        try {
+          await partyRelationshipTypeService.syncFromTradeUnleashed();
+          console.log('[SyncController] ✓ Party relationship types synced via manual integration trigger');
+        } catch (error) {
+          console.error('[SyncController] Party relationship types sync failed during manual trigger:', error);
+        }
         res.status(202).json({
           success: true,
           message: result.message,

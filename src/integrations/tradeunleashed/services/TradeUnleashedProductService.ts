@@ -40,12 +40,11 @@ export class TradeUnleashedProductService {
     defaultFromDate.setDate(defaultFromDate.getDate() - 30);
     const fromDate = params?.fromDate || defaultFromDate;
 
-    // Use provided facilityIds or default from config
-    const facilityIds = params?.facilityIds?.join(',') || this.config.defaultFacilityId;
+    const facilityResolution = this.resolveFacilityIds(params?.facilityIds);
 
     // Build API params
     const apiParams: TradeUnleashedStockQueryParams = {
-      facilityIds: facilityIds,
+      facilityIds: facilityResolution.value,
       fromDate: fromDate.toISOString(),
       max: params?.max || 300,
       offset: params?.offset || 0,
@@ -210,6 +209,29 @@ export class TradeUnleashedProductService {
       quantityAvailable: item.quantityAvailable,
       lastCountDate: item.lastUpdated ? new Date(item.lastUpdated) : undefined,
     };
+  }
+
+  private resolveFacilityIds(requestedIds?: string[]): { value?: string; source: 'request' | 'login' | 'config' | 'none' } {
+    if (requestedIds && requestedIds.length > 0) {
+      const joined = requestedIds.join(',');
+      console.log('[TradeUnleashedProductService] Using facilityIds from request:', joined);
+      return { value: joined, source: 'request' };
+    }
+
+    const clientFacilities = this.client.getFacilityIds();
+    if (clientFacilities.length > 0) {
+      const joined = clientFacilities.join(',');
+      console.log('[TradeUnleashedProductService] Using facilityIds from login response:', joined);
+      return { value: joined, source: 'login' };
+    }
+
+    if (this.config.defaultFacilityId) {
+      console.log('[TradeUnleashedProductService] Using fallback facilityId from config:', this.config.defaultFacilityId);
+      return { value: this.config.defaultFacilityId, source: 'config' };
+    }
+
+    console.warn('[TradeUnleashedProductService] No facilityIds available (request/login/config); TradeUnleashed defaults may apply.');
+    return { value: undefined, source: 'none' };
   }
 
   /**

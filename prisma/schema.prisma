@@ -1169,6 +1169,171 @@ model Role {
 }
 
 // ============================================
+// 15. TRADEUNLEASHED USER ROLES
+// ============================================
+
+model UserRles {
+  id            BigInt   @id
+  remoteUserId  BigInt
+  remoteRoleId  BigInt
+  authority     String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model PartyFacilityRole {
+  id                    BigInt   @id
+  partyId               BigInt
+  facilityId            BigInt
+  facilityRoleTypeId    BigInt?
+  facilityRoleTypeName  String?
+  facilityName          String?
+  facility              Json?
+  raw                   Json?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([partyId])
+  @@index([facilityId])
+  @@index([facilityRoleTypeName])
+}
+
+model PartyRole {
+  id               BigInt   @id
+  partyId          BigInt
+  partyName        String?
+  partyTypeId      BigInt?
+  partyTypeName    String?
+  partyUserId      BigInt?
+  partyUsername    String?
+  partyRoleTypeId  BigInt?
+  partyRoleTypeName String?
+  raw              Json?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([partyId])
+  @@index([partyRoleTypeName])
+}
+
+model PosSession {
+  id                 BigInt   @id
+  sessionReference   String
+  startTime          DateTime?
+  endTime            DateTime?
+  startingCash       Decimal?
+  actualAmount       Decimal?
+  posId              BigInt?
+  posName            String?
+  posShowOrderCreated Boolean?
+  posAllowCreditSales Boolean?
+  posAllowEditingSalePrices Boolean?
+  posProductWriteAccess Boolean?
+  posStockPurchaseAccess Boolean?
+  facilityId         BigInt?
+  priceListId        BigInt?
+  salePriceListId    BigInt?
+  fbrPosId           BigInt?
+  userId             BigInt?
+  raw                Json?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @default(now())
+
+  @@index([posId])
+  @@index([userId])
+}
+
+model SaleType {
+  id            BigInt   @id
+  name          String
+  code          String?
+  priceListType String?
+  description   String?
+  isDefault     Boolean?
+  raw           Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model OrderAdjustmentType {
+  id        BigInt   @id
+  name      String
+  raw       Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model OrderRoleType {
+  id        BigInt   @id
+  name      String
+  raw       Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model OrderStatusType {
+  id        BigInt   @id
+  name      String
+  raw       Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model InvoiceItemType {
+  id          BigInt   @id
+  name        String
+  description String?
+  properties  Json?
+  raw         Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model PaymentType {
+  id          BigInt   @id
+  name        String
+  description String?
+  raw         Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model TradePaymentMethod {
+  id                BigInt   @id
+  name              String
+  paymentMethodType String?
+  accountRef        Json?
+  raw               Json?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model ContactMechanismType {
+  id          BigInt   @id
+  name        String
+  description String?
+  raw         Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model PartyRoleType {
+  id        BigInt   @id
+  name      String
+  raw       Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PartyRelationshipType {
+  id        BigInt   @id
+  name      String
+  raw       Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ============================================
 // 10. DISCOUNTS & PROMOTIONS
 // ============================================
 
@@ -1356,4 +1521,107 @@ model StoreConfig {
   updatedAt                  DateTime     @updatedAt
 
   @@index([organizationCode])
+}
+
+// ============================================
+// 14. ORGANIZATION ACCOUNT SETTINGS
+// ============================================
+
+model OrgAccountSetting {
+  id                               Int      @id
+  settings                         Json
+  enableSerializedInventory        Boolean?
+  enableGroupedProducts            Boolean?
+  scanBundleItems                  Boolean?
+  generateBarcodeByName            Boolean?
+  generateBarcodeBySeries          Boolean?
+  generateSkuByName                Boolean?
+  generateSkuBySeries              Boolean?
+  barcodePrefix                    String?
+  skuPrefix                        String?
+  startingSeqNum                   Int?
+  attrCharLength                   Int?
+  keepSellingOnOutOfStock          Boolean?
+  continueTransferOnOutOfStock     Boolean?
+  printSkuOnDocuments              Boolean?
+  printBarcodeOnDocuments          Boolean?
+  verifyItemsBeforeFulfill         Boolean?
+  barcodeLabelWidth                Float?
+  barcodeLabelHeight               Float?
+  barcodeWidth                     Float?
+  barcodeHeight                    Float?
+  barcodeLabelLeftPadding          Float?
+  barcodeLabelGap                  Float?
+  printProductName                 Boolean?
+  printVariantName                 Boolean?
+  printRetailPrice                 Boolean?
+  printSKU                         Boolean?
+  printProductAttributes           Boolean?
+  barcodeLabelColumns              Int?
+  multipelUoms                     Boolean?
+  taxInclusive                     Boolean?
+  gst                              String?
+  fbrPCTCode                       String?
+  enableCustomOrderStages          Boolean?
+  maxDiscountForReturn             Float?
+  paymentDueAlert                  Boolean?
+  lastPaymentAlert                 Boolean?
+  lockAccount                      Boolean?
+  autoOrderDiscount                Float?
+  enableMto                        Boolean?
+  maxAllowedRefund                 Float?
+  courierServiceSelection          Boolean?
+  currencyCode                     String?
+  organizationContent              String?
+  printPackingList                 Boolean?
+  isMultiVendor                    Boolean?
+  vendorName                       String?
+  pickListSmall                    Boolean?
+  useMtoImages                     Boolean?
+  askForCustomer                   Boolean?
+  askForSalesPerson                Boolean?
+  enablePosOrderSeq                Boolean?
+  enablePurchaseOrderTypes         Boolean?
+  maxSubOrders                     Int?
+  softAdjustmentOpeningDate        DateTime?
+  compactShippingLabel             Boolean?
+  enablePickerAssignment           Boolean?
+  enableSaleOrderAssignment        Boolean?
+  saleOrderReAssignment            Boolean?
+  enableAccountCodes               Boolean?
+  invoiceControlPaymentAccountId   Int?
+  invoiceControlPaymentAccountName String?
+  defaultPriceList                 String?
+  shippingLabelDocumentId          Int?
+  shippingLabelDocumentDescription Boolean?
+  shippingLabelDocumentProductName Boolean?
+  shippingLabelDocumentProductSku  Boolean?
+  shippingLabelDocumentRemarks     Boolean?
+  shippingLabelDocumentPrintBarcode Boolean?
+  shippingLabelDocumentNumOfLabels Int?
+  shippingLabelDocumentSortLabelBySku Boolean?
+  shippingLabelDocumentDefaultRemarks String?
+  stockAllocationRules             Boolean?
+  isDropShippingAccount            Boolean?
+  enableMultiLocationFulfillment   Boolean?
+  applyThreeLevelBuffer            Boolean?
+  fbrPosFeeOnlineOrders            Float?
+  isCustomerRequired               Boolean?
+  isSalesPersonRequired            Boolean?
+  showCustomerSelectionAlert       Boolean?
+  disableManualBarcodeEntryInDispatch Boolean?
+  manualCompletionInDispatch       Boolean?
+  syncDraftQuantityToExternalApps  Boolean?
+  splitFulfillment                 Boolean?
+  distanceOptimisedFulfillment     Boolean?
+  maxDistanceForFullOrderFulfillment Int?
+  useSequenceBarcoding             Boolean?
+  duplicateResolutionLimit         Int?
+  receivePurchaseOrderByGrn        Boolean?
+  productionOrderScanning          Boolean?
+  useRevisedShippingLabel          Boolean?
+  allowManualQtyInScan             Boolean?
+  autoReplaceErrorCodeInDispatch   Boolean?
+  createdAt                        DateTime @default(now())
+  updatedAt                        DateTime @updatedAt
 }

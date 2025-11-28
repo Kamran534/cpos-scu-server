@@ -13,4 +13,5 @@ export * from './api/TradeUnleashedClient.js';
 export * from './services/TradeUnleashedAuthService.js';
 export * from './services/TradeUnleashedProductService.js';
 export * from './services/TradeUnleashedOrderService.js';
+export * from './services/TradeUnleashedOrgAccountSettingService.js';
 
