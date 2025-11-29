@@ -6,7 +6,7 @@
  * NO integration-specific code here
  */
 
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { 
   ProductPayload, 
   ProductVariantPayload,
@@ -21,6 +21,25 @@ import {
   LocationRepository,
   InventoryItemRepository,
 } from '../repositories/index.js';
+
+interface ProductError {
+  sku: string;
+  error: string | undefined;
+  validationErrors?: ValidationError[];
+}
+
+interface VariantError {
+  sku: string;
+  error: string | undefined;
+  validationErrors?: ValidationError[];
+}
+
+interface InventoryError {
+  sku: string;
+  location?: string;
+  error: string | undefined;
+  validationErrors?: ValidationError[];
+}
 
 export class ProductPayloadProcessor {
   private prisma: PrismaClient;
@@ -69,6 +88,10 @@ export class ProductPayloadProcessor {
       // Check if product exists
       const existingProduct = await this.productRepo.findBySku(payload.sku);
 
+      // Extract externalId from customFields for direct field storage
+      const externalId = payload.customFields?.externalId as string | undefined;
+      const externalSystem = payload.customFields?.externalSystem as string | undefined;
+
       // Build product data
       // Note: Product uses 'productCode', not 'sku'. SKU is on ProductVariant.
       const productData = {
@@ -79,9 +102,15 @@ export class ProductPayloadProcessor {
         brandId,
         isActive: payload.isActive,
         tags: payload.tags || [],
-        // Note: Product model doesn't have a metadata field
-        // Source tracking could be added via a separate table if needed
+        externalId, // TradeUnleashed productId - CRITICAL for sales order mapping
+        externalSystem, // 'tradeunleashed'
+        metadata: payload.customFields || {}, // Store integration-specific data (e.g., TradeUnleashed productId)
       };
+
+      // Debug: Log metadata for first few products
+      // if (Math.random() < 0.01) { // Log ~1% of products to avoid spam
+      //   console.log(`[ProductPayloadProcessor] Product metadata sample - SKU: ${payload.sku}, metadata:`, JSON.stringify(productData.metadata));
+      // }
 
       let product;
       if (existingProduct) {
@@ -132,6 +161,10 @@ export class ProductPayloadProcessor {
         where: { sku: payload.variantSku },
       });
 
+      // Extract externalId from customFields for direct field storage
+      const variantExternalId = payload.customFields?.externalId as string | undefined;
+      const variantExternalSystem = payload.customFields?.externalSystem as string | undefined;
+
       // Build variant data
       const variantData = {
         productId: product.id,
@@ -143,6 +176,9 @@ export class ProductPayloadProcessor {
         weight: payload.weight,
         barcode: payload.barcode,
         isActive: payload.isActive,
+        externalId: variantExternalId, // TradeUnleashed item ID (730467712) - CRITICAL for sales order mapping!
+        externalSystem: variantExternalSystem, // 'tradeunleashed'
+        metadata: (payload.customFields || {}) as Prisma.InputJsonValue, // Store integration-specific data (e.g., TradeUnleashed item ID)
       };
 
       let variant;
@@ -235,10 +271,12 @@ export class ProductPayloadProcessor {
    */
   async processBatch(batch: ProductBatchPayload): Promise<ProcessResult> {
     const results = {
-      products: { success: 0, failed: 0, errors: [] as any[] },
-      variants: { success: 0, failed: 0, errors: [] as any[] },
-      inventory: { success: 0, failed: 0, errors: [] as any[] },
+      products: { success: 0, failed: 0, errors: [] as ProductError[] },
+      variants: { success: 0, failed: 0, errors: [] as VariantError[] },
+      inventory: { success: 0, failed: 0, errors: [] as InventoryError[] },
     };
+
+    // console.log(`[ProductPayloadProcessor] Processing batch: ${batch.products.length} products, ${batch.variants?.length || 0} variants, ${batch.inventory?.length || 0} inventory items`);
 
     // Process products
     for (const productPayload of batch.products) {
@@ -252,8 +290,12 @@ export class ProductPayloadProcessor {
           error: result.error,
           validationErrors: result.validationErrors,
         });
+        console.error(`[ProductPayloadProcessor] Product failed - SKU: ${productPayload.sku}, Error: ${result.error}`);
       }
     }
+
+    // console.log(`[ProductPayloadProcessor] Products: ${results.products.success} succeeded, ${results.products.failed} failed`);
+
 
     // Process variants
     if (batch.variants) {
@@ -268,8 +310,10 @@ export class ProductPayloadProcessor {
             error: result.error,
             validationErrors: result.validationErrors,
           });
+          console.error(`[ProductPayloadProcessor] Variant failed - SKU: ${variantPayload.variantSku}, Error: ${result.error}`);
         }
       }
+      // console.log(`[ProductPayloadProcessor] Variants: ${results.variants.success} succeeded, ${results.variants.failed} failed`);
     }
 
     // Process inventory

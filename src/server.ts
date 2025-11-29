@@ -8,6 +8,7 @@ import { config } from './config/index.js';
 import { SyncWorker } from './workers/SyncWorker.js';
 import { ensureDatabaseSchema } from './utils/ensureDatabaseSchema.js';
 import { prisma, testDatabaseConnection, disconnectPrisma } from './lib/prisma.js';
+import { TradeUnleashedOrderSyncScheduler } from './services/tradeUnleashed/TradeUnleashedOrderSyncScheduler.js';
 
 // Load environment variables
 dotenv.config();
@@ -87,6 +88,33 @@ async function startSyncWorker(): Promise<boolean> {
   }
 }
 
+// Initialize TradeUnleashed Order Sync Scheduler
+let orderSyncScheduler: TradeUnleashedOrderSyncScheduler | null = null;
+
+async function startOrderSyncScheduler(): Promise<boolean> {
+  try {
+    const syncIntervalMinutes = parseInt(process.env.TRADEUNLEASHED_SYNC_INTERVAL_MINUTES || '5', 10);
+    
+    orderSyncScheduler = new TradeUnleashedOrderSyncScheduler(
+      {
+        baseUrl: config.tradeUnleashed.baseUrl,
+        username: config.tradeUnleashed.username,
+        password: config.tradeUnleashed.password,
+      },
+      syncIntervalMinutes
+    );
+
+    await orderSyncScheduler.start();
+    return true;
+  } catch (error) {
+    console.error('\nTradeUnleashed Order Sync Scheduler failed to start:');
+    if (error instanceof Error) {
+      console.error(`   ${error.message}`);
+    }
+    return false;
+  }
+}
+
 // Start server
 server.listen(PORT, async () => {
   // Prevent duplicate banner printing
@@ -102,6 +130,9 @@ server.listen(PORT, async () => {
   if (rabbitConnected) {
     workerRunning = await startSyncWorker();
   }
+
+  // Start TradeUnleashed Order Sync Scheduler
+  const orderSyncRunning = await startOrderSyncScheduler();
 
   const base = `http://localhost:${PORT}`;
   const rabbitUi = 'http://localhost:15672';
@@ -125,7 +156,8 @@ server.listen(PORT, async () => {
     ` Database   : ${dbConnected ? `${green}✓ Connected${reset}` : `${yellow}✗ Not Connected${reset}`} `,
     ` RabbitMQ   : ${rabbitConnected ? `${green}✓ Connected${reset}` : `${yellow}✗ Not Connected${reset}`} `,
     ` RabbitMQ UI: ${cyan}${rabbitUi}${reset} `,
-    ` Sync Worker: ${workerRunning ? `${green}✓ Running${reset}` : `${yellow}✗ Not Running${reset}`} `
+    ` Sync Worker: ${workerRunning ? `${green}✓ Running${reset}` : `${yellow}✗ Not Running${reset}`} `,
+    ` Order Sync : ${orderSyncRunning ? `${green}✓ Running${reset}` : `${yellow}✗ Not Running${reset}`} `
   ];
   // Calculate width without ANSI codes (strip color codes for width calculation)
   const width = Math.max(...lines.map(l => stripAnsi(l).length)) + 2;

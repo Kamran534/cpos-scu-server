@@ -1,0 +1,18 @@
+{
+  "locationId": "5726ea68-1b2a-44f0-9357-f08529d72663",
+  "cashierId": "5abd7a19-b236-4d17-854c-2c491c9a5c5d",
+  "lineItems": [
+    {
+      "variantId": "variant-uuid-here",
+      "quantity": 1,
+      "unitPrice": 100.00
+    }
+  ],
+  "payments": [
+    {
+      "paymentMethodId": "payment-method-uuid",
+      "amount": 100.00
+    }
+  ]
+}
+

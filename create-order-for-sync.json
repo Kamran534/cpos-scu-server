@@ -1,0 +1,20 @@
+{
+  "locationId": "5da9068e-5bb3-4ee3-8c2e-e0fc3bc28ea4",
+  "cashierId": "5abd7a19-b236-4d17-854c-2c491c9a5c5d",
+  "lineItems": [
+    {
+      "variantId": "377ad85d-f929-4f38-b6de-6a88e986f2b3",
+      "quantity": 1,
+      "unitPrice": 100.00
+    }
+  ],
+  "payments": [
+    {
+      "paymentMethodId": "20702044",
+      "amount": 100.00
+    }
+  ],
+  "notes": "Order to be synced to TradeUnleashed",
+  "customerNotes": "Customer notes here (optional)"
+}
+

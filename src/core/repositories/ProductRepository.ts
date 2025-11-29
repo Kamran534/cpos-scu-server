@@ -5,7 +5,7 @@
  * NO business logic - just data access
  */
 
-import { PrismaClient, Product } from '@prisma/client';
+import { PrismaClient, Product, Prisma } from '@prisma/client';
 import { BaseRepository } from './BaseRepository.js';
 
 export class ProductRepository extends BaseRepository<Product> {
@@ -61,7 +61,7 @@ export class ProductRepository extends BaseRepository<Product> {
     });
   }
 
-  async bulkCreate(products: any[]): Promise<number> {
+  async bulkCreate(products: Prisma.ProductCreateInput[]): Promise<number> {
     const result = await this.getModel().createMany({
       data: products,
       skipDuplicates: true,

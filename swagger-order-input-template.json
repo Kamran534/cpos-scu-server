@@ -1,0 +1,38 @@
+{
+  "_instructions": "Copy this JSON to Swagger UI. Replace the placeholder values marked with <REPLACE>",
+  "_note": "This template is for POST /api/sales-orders/bulk-save endpoint",
+  "storeId": 1,
+  "locationId": "<REPLACE_WITH_LOCATION_CODE_OR_UUID>",
+  "_locationId_help": "Use location code (e.g., '184806') or UUID. Code will be looked up automatically.",
+  "cashierId": "<REPLACE_WITH_CASHIER_UUID>",
+  "_cashierId_help": "UUID of the cashier/user. Leave empty to use default active user.",
+  "orders": [
+    {
+      "id": 1504723025127,
+      "_id_help": "TradeUnleashed order ID (numeric)",
+      "orderNumber": "SO-TU-5",
+      "_orderNumber_help": "Unique order number/reference",
+      "customerId": 182643,
+      "_customerId_help": "TradeUnleashed customer/party ID. Can be null if no customer.",
+      "orderDate": "2024-11-02T01:29:27.859Z",
+      "status": "confirmed",
+      "_status_help": "Status: 'confirmed' (maps to Completed), 'pending' (maps to Open), 'voided', 'parked', 'onhold'",
+      "totalAmount": 1000,
+      "lastModifiedOn": "2024-11-02T01:29:27.859Z",
+      "lines": [
+        {
+          "id": 1611469024988,
+          "_id_help": "TradeUnleashed line item ID",
+          "productId": "<REPLACE_WITH_TRADEUNLEASHED_INVENTORY_ITEM_ID>",
+          "_productId_help": "TradeUnleashed inventory item ID (e.g., 393165). Must exist in database as ProductVariant with externalId matching this value.",
+          "quantity": 1,
+          "unitPrice": 1000,
+          "discount": 0,
+          "taxAmount": 0,
+          "lineTotal": 1000
+        }
+      ]
+    }
+  ]
+}
+

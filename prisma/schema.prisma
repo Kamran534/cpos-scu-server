@@ -228,6 +228,9 @@ model Product {
   taxCategory    TaxCategory? @relation(fields: [taxCategoryId], references: [id])
   images         String[]
   tags           String[]
+  externalId     String?      // External system ID (e.g., TradeUnleashed productId) - for API mapping
+  externalSystem String?      // Source system name (e.g., 'tradeunleashed')
+  metadata       Json?        // Integration-specific data (e.g., TradeUnleashed productId, imageUrl, etc.)
   isActive       Boolean      @default(true)
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
@@ -239,6 +242,7 @@ model Product {
   @@index([brandId])
   @@index([supplierId])
   @@index([isActive])
+  @@index([externalId, externalSystem])
 }
 
 model ProductVariant {
@@ -259,6 +263,9 @@ model ProductVariant {
   image          String?
   position       Int      @default(0)
   isActive       Boolean  @default(true)
+  externalId     String?  // External system variant/item ID (e.g., TradeUnleashed item id: 730467712) - CRITICAL for sales order mapping
+  externalSystem String?  // Source system name (e.g., 'tradeunleashed')
+  metadata       Json?    // Integration-specific data (e.g., TradeUnleashed variant ID, source system info)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -275,6 +282,7 @@ model ProductVariant {
   @@index([productId])
   @@index([sku])
   @@index([barcode])
+  @@index([externalId, externalSystem])
 }
 
 model InventoryItem {
@@ -491,6 +499,13 @@ enum OrderSource {
   Mobile
 }
 
+enum SyncStatus {
+  Pending   // Not yet synced to external system
+  Synced    // Successfully synced
+  Failed    // Sync failed
+  Syncing   // Currently syncing
+}
+
 model SaleOrder {
   id            String       @id @default(uuid())
   orderNumber   String       @unique
@@ -534,6 +549,16 @@ model SaleOrder {
   receiptPrintedAt DateTime?
   shiftId          String?
   shift            Shift?      @relation(fields: [shiftId], references: [id])
+
+  // TradeUnleashed Integration Fields
+  externalId       String?     // TradeUnleashed order ID
+  externalSystem   String?     // 'tradeunleashed'
+  syncStatus       SyncStatus  @default(Pending) // Pending, Synced, Failed
+  syncedAt         DateTime?   // When successfully synced to TU
+  syncError        String?     // Error message if sync failed
+  syncAttempts     Int         @default(0) // Number of sync attempts
+  lastSyncAttempt  DateTime?   // Last time sync was attempted
+
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
 

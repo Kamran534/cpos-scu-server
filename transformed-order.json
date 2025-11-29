@@ -1,0 +1,25 @@
+{
+  "storeId": 1,
+  "orders": [
+    {
+      "id": 1504723025127,
+      "orderNumber": "5",
+      "customerId": 182643,
+      "orderDate": "2024-11-02T01:29:27.859Z",
+      "status": "confirmed",
+      "totalAmount": 1000,
+      "lastModifiedOn": "2024-11-02T01:29:27.859Z",
+      "lines": [
+        {
+          "id": 1611469024988,
+          "productId": 393165,
+          "quantity": 1,
+          "unitPrice": 1000,
+          "discount": 0,
+          "taxAmount": 0,
+          "lineTotal": 1000
+        }
+      ]
+    }
+  ]
+}

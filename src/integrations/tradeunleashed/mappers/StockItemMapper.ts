@@ -18,17 +18,17 @@
 export interface RawStockItem {
   id: string | number;
   name: string;
-  sku: string;
-  barCode?: string;
+  sku: string | null;
+  barCode?: string | null;
   productId?: string | number;
   onhand: number;
   committed?: number;
   incoming?: number;
   continueSelling?: boolean;
-  imageUrl?: string;
-  
+  imageUrl?: string | null;
+
   // Allow any other fields that might come from API
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 /**
@@ -86,18 +86,21 @@ export class StockItemMapper {
     const onhand = raw.onhand || 0;
     const committed = raw.committed || 0;
     const available = Math.max(0, onhand - committed); // Can't be negative
-    
+
+    // Generate SKU: use sku field, fallback to barCode, then generate from ID
+    const sku = raw.sku || raw.barCode || `TU-${raw.id}`;
+
     return {
       // Identity - Ensure all IDs are strings
       id: String(raw.id),
-      sku: raw.sku,
+      sku: sku,
       productId: raw.productId ? String(raw.productId) : undefined,
       
       // Product Info
       name: raw.name,
       description: undefined, // Not provided by stock query API
-      barcode: raw.barCode, // Note: API uses camelCase 'barCode'
-      imageUrl: raw.imageUrl,
+      barcode: raw.barCode ?? undefined, // Note: API uses camelCase 'barCode'
+      imageUrl: raw.imageUrl ?? undefined,
       
       // Inventory Quantities
       quantityOnHand: onhand,
@@ -142,7 +145,7 @@ export class StockItemMapper {
    * Extract unique SKUs from raw items
    */
   static extractUniqueSKUs(rawItems: RawStockItem[]): string[] {
-    return [...new Set(rawItems.map(item => item.sku))];
+    return [...new Set(rawItems.map(item => item.sku).filter((sku): sku is string => sku !== null))];
   }
   
   /**
@@ -162,30 +165,35 @@ export class StockItemMapper {
   
   /**
    * Validate that a raw item has required fields
+   * SKU can be null - we'll generate it from barCode or ID
    */
-  static isValid(raw: any): raw is RawStockItem {
+  static isValid(raw: unknown): raw is RawStockItem {
+    if (!raw || typeof raw !== 'object') {
+      return false;
+    }
+    const item = raw as Record<string, unknown>;
     return (
-      raw &&
-      (typeof raw.id === 'string' || typeof raw.id === 'number') &&
-      typeof raw.name === 'string' &&
-      typeof raw.sku === 'string' &&
-      typeof raw.onhand === 'number'
+      (typeof item.id === 'string' || typeof item.id === 'number') &&
+      typeof item.name === 'string' &&
+      (typeof item.sku === 'string' || item.sku === null) &&
+      typeof item.onhand === 'number'
     );
   }
   
   /**
    * Filter out invalid items and log warnings
    */
-  static validateAndFilter(rawItems: any[]): RawStockItem[] {
+  static validateAndFilter(rawItems: unknown[]): RawStockItem[] {
     const valid: RawStockItem[] = [];
     
     for (let i = 0; i < rawItems.length; i++) {
-      if (this.isValid(rawItems[i])) {
-        valid.push(rawItems[i]);
+      const item = rawItems[i];
+      if (this.isValid(item)) {
+        valid.push(item);
       } else {
         console.warn(
           `[StockItemMapper] Invalid item at index ${i}:`,
-          JSON.stringify(rawItems[i])
+          JSON.stringify(item)
         );
       }
     }

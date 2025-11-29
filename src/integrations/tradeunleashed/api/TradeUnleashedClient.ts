@@ -16,6 +16,7 @@ import {
   TradeUnleashedUserRole,
   TradeUnleashedFacilityRole,
   TradeUnleashedPartyRole,
+  TradeUnleashedPosDevice,
   TradeUnleashedPosSession,
   TradeUnleashedSaleType,
   TradeUnleashedOrderAdjustmentType,
@@ -28,6 +29,7 @@ import {
   TradeUnleashedPartyRoleType,
   TradeUnleashedPartyRelationshipType,
 } from '../types.js';
+import { tradeUnleashedUserSyncService } from '../../../services/tradeUnleashedUserSyncService.js';
 
 export class TradeUnleashedClient {
   private config: TradeUnleashedConfig;
@@ -36,6 +38,7 @@ export class TradeUnleashedClient {
   private facilityIds: string[] = [];
   private partyId: string | null = null;
   private cachedUserId: string | null = null;
+  private posSessionId: number | null = null; // Store POS session ID from login response
 
   constructor(config: TradeUnleashedConfig) {
     this.config = config;
@@ -87,7 +90,38 @@ export class TradeUnleashedClient {
       this.facilityIds = this.collectFacilityIds(facilityRoles);
       this.partyId = this.extractPartyId(data);
       this.cachedUserId = this.extractUserId(data);
-      console.log('[TradeUnleashedClient] facilityRoles from login response:', JSON.stringify(facilityRoles, null, 2));
+      
+      // Extract POS session ID from login response
+      // CRITICAL: The structure is nested!
+      // data.pos[0].posSessions[0].id = ACTUAL SESSION ID (e.g., 2304083785)
+      // data.pos[0].id = POS DEVICE ID (e.g., 2250448529) - WRONG!
+      if (data.pos && Array.isArray(data.pos) && data.pos.length > 0) {
+        const posDevice: TradeUnleashedPosDevice = data.pos[0];
+
+        // Check if there are active sessions in the posSessions array
+        if (posDevice.posSessions && Array.isArray(posDevice.posSessions) && posDevice.posSessions.length > 0) {
+          // Use the LAST session in the array (most recent/active)
+          const activeSession = posDevice.posSessions[posDevice.posSessions.length - 1];
+
+          if (activeSession.id && typeof activeSession.id === 'number') {
+            this.posSessionId = activeSession.id;
+            console.log(`[TradeUnleashedClient] ✓ Using ACTIVE POS Session ID: ${this.posSessionId}`);
+            console.log(`[TradeUnleashedClient]   Session Reference: ${activeSession.sessionReference}`);
+            console.log(`[TradeUnleashedClient]   Start Time: ${activeSession.startTime}`);
+            console.log(`[TradeUnleashedClient]   (POS Device ID ${posDevice.id} - NOT used for orders)`);
+
+            // Sync the ACTIVE session to database
+            await this.syncPosSessionToDatabase(activeSession);
+          }
+        } else {
+          console.warn(`[TradeUnleashedClient] ⚠️ No active POS sessions found in posSessions array`);
+          console.warn(`[TradeUnleashedClient]   POS Device ID: ${posDevice.id} (but no active session)`);
+        }
+      } else {
+        console.warn(`[TradeUnleashedClient] ⚠️ No POS data in login response`);
+      }
+
+      // console.log('[TradeUnleashedClient] facilityRoles from login response:', JSON.stringify(facilityRoles, null, 2));
       console.log(
         '[TradeUnleashedClient] Login successful for',
         loginUser,
@@ -96,6 +130,22 @@ export class TradeUnleashedClient {
         '→ token expires in',
         `${Math.round(expiresIn / 60)}m`
       );
+
+      // Sync user data from login response to User and UserLocation tables
+      try {
+        const syncResult = await tradeUnleashedUserSyncService.syncUserFromLoginResponse(data);
+        console.log(
+          '[TradeUnleashedClient] ✓ User synced:',
+          syncResult.user.username,
+          `(${syncResult.locations.length} locations)`
+        );
+      } catch (error) {
+        console.error(
+          '[TradeUnleashedClient] Failed to sync user from login response:',
+          error instanceof Error ? error.message : String(error)
+        );
+        // Don't throw - login was successful, user sync failure shouldn't block login
+      }
 
       return data;
     } catch (error) {
@@ -120,7 +170,7 @@ export class TradeUnleashedClient {
 
     const url = `${this.config.baseUrl}/api/inventoryItems/stockQuery?${queryParams.toString()}`;
 
-    console.log('TradeUnleashed URL:', url);
+    // console.log('TradeUnleashed URL:', url);
 
     try {
       const response = await fetch(url, {
@@ -160,7 +210,7 @@ export class TradeUnleashedClient {
             return obj as TradeUnleashedStockItem;
           });
           
-          console.log(`[TradeUnleashedClient] Transformed ${items.length} rows from CSV format to objects`);
+          // console.log(`[TradeUnleashedClient] Transformed ${items.length} rows from CSV format to objects`);
         }
       } else if (Array.isArray(responseData)) {
         // Already in object format
@@ -767,6 +817,52 @@ export class TradeUnleashedClient {
   }
 
   /**
+   * Create sales orders in TradeUnleashed
+   * @param saleOrders Array of sales orders in TradeUnleashed format
+   */
+  async createSalesOrders(saleOrders: unknown[]): Promise<unknown> {
+    await this.ensureAuthenticated();
+
+    const url = `${this.config.baseUrl}/api/saleOrders/bulkSave`;
+
+    const payload = {
+      saleOrders: saleOrders
+    };
+
+    try {
+      // Log the payload being sent for debugging
+      console.log(`[TradeUnleashedClient] Sending ${saleOrders.length} orders to TradeUnleashed...`);
+      if (saleOrders.length > 0) {
+        console.log(`[TradeUnleashedClient] Sample order payload:`, JSON.stringify(saleOrders[0], null, 2));
+      }
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[TradeUnleashedClient] Error response from TradeUnleashed:`, errorText);
+        console.error(`[TradeUnleashedClient] Request payload that failed:`, JSON.stringify(payload, null, 2));
+        throw new Error(`Create sales orders failed: ${response.statusText} - ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log(`[TradeUnleashedClient] Successfully created orders. Response:`, JSON.stringify(data, null, 2));
+      return data;
+    } catch (error) {
+      throw new Error(
+        `TradeUnleashed create sales orders error: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  }
+
+  /**
    * Ensure we have a valid access token
    */
   private async ensureAuthenticated(): Promise<void> {
@@ -819,6 +915,13 @@ export class TradeUnleashedClient {
 
   getUserId(): string | null {
     return this.cachedUserId;
+  }
+
+  /**
+   * Get POS session ID from login response
+   */
+  getPosSessionId(): number | null {
+    return this.posSessionId;
   }
 
   /**
@@ -884,6 +987,75 @@ export class TradeUnleashedClient {
   private extractUserId(data: TradeUnleashedLoginResponse): string | null {
     const candidate = data.user?.id ?? data.user?.username ?? null;
     return candidate !== null && candidate !== undefined ? candidate.toString() : null;
+  }
+
+  /**
+   * Sync POS session from login response to database
+   */
+  private async syncPosSessionToDatabase(posSessionData: TradeUnleashedPosSession): Promise<void> {
+    try {
+      const { PrismaClient } = await import('@prisma/client');
+      const prisma = new PrismaClient();
+
+      try {
+        const sessionId = BigInt(posSessionData.id);
+        const sessionReference = posSessionData.sessionReference || `POS-${posSessionData.id}`;
+        const startTime = posSessionData.startTime ? new Date(posSessionData.startTime) : null;
+        const endTime = posSessionData.endTime ? new Date(posSessionData.endTime) : null;
+        const startingCash = posSessionData.startingCash || null;
+        const actualAmount = posSessionData.actualAmount || null;
+
+        // Extract POS and facility IDs
+        const posId = posSessionData.pos?.id ? BigInt(posSessionData.pos.id) : null;
+        const posName = posSessionData.pos?.name || null;
+        const facilityId = posSessionData.pos?.facility?.id ? BigInt(posSessionData.pos.facility.id) : null;
+        const userId = posSessionData.user?.id ? BigInt(posSessionData.user.id) : null;
+
+        // Convert to JSON-compatible object for storage (Prisma JSON field)
+        const rawData = JSON.parse(JSON.stringify(posSessionData));
+
+        // Upsert POS session
+        await prisma.posSession.upsert({
+          where: { id: sessionId },
+          update: {
+            sessionReference,
+            startTime,
+            endTime,
+            startingCash,
+            actualAmount,
+            posId,
+            posName,
+            facilityId,
+            userId,
+            raw: rawData,
+            updatedAt: new Date(),
+          },
+          create: {
+            id: sessionId,
+            sessionReference,
+            startTime,
+            endTime,
+            startingCash,
+            actualAmount,
+            posId,
+            posName,
+            facilityId,
+            userId,
+            raw: rawData,
+          },
+        });
+
+        console.log(`[TradeUnleashedClient] ✓ POS Session ${sessionId} synced to database`);
+      } finally {
+        await prisma.$disconnect();
+      }
+    } catch (error) {
+      console.error(
+        '[TradeUnleashedClient] Failed to sync POS session to database:',
+        error instanceof Error ? error.message : String(error)
+      );
+      // Don't throw - POS session sync failure shouldn't block login
+    }
   }
 }
 

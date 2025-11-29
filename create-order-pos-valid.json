@@ -1,0 +1,18 @@
+{
+  "locationId": "3f282667-5560-4f77-86a0-45d2b9547f05",
+  "cashierId": "5abd7a19-b236-4d17-854c-2c491c9a5c5d",
+  "lineItems": [
+    {
+      "variantId": "e5a0deb5-4c57-42a6-a8f8-05f1fc1a128a",
+      "quantity": 1,
+      "unitPrice": 100.00
+    }
+  ],
+  "payments": [
+    {
+      "paymentMethodId": "2020754944",
+      "amount": 100.00
+    }
+  ]
+}
+

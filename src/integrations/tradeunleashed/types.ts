@@ -46,13 +46,20 @@ export interface TradeUnleashedLoginResponse {
     };
   };
   organization?: unknown;
-  pos?: unknown[];
+  pos?: TradeUnleashedPosDevice[];
   userName?: string;
   person?: {
     id?: number | string;
     name?: string;
     facilityRoles?: Array<TradeUnleashedFacilityRole>;
   };
+}
+
+export interface TradeUnleashedPosDevice {
+  id: number | string;
+  name?: string;
+  posSessions?: TradeUnleashedPosSession[];
+  [key: string]: unknown;
 }
 
 export interface TradeUnleashedPosSession {

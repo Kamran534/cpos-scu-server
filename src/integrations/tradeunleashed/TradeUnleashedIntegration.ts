@@ -20,8 +20,10 @@ export class TradeUnleashedIntegration implements IIntegrationService {
   private initialized = false;
 
   constructor(config: TradeUnleashedConfig) {
+    // Create a single shared client instance
     this.client = new TradeUnleashedClient(config);
-    this.productService = new TradeUnleashedProductService(config);
+    // Pass the client to services so they use the same instance
+    this.productService = new TradeUnleashedProductService(config, this.client);
     this.orderService = new TradeUnleashedOrderService(config);
   }
 

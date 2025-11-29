@@ -1,0 +1,29 @@
+{
+  "locationId": "482d06a3-f58a-45ba-a513-64badec195a6",
+  "cashierId": "5abd7a19-b236-4d17-854c-2c491c9a5c5d",
+  "lineItems": [
+    {
+      "variantId": "243dffe2-ab1d-479c-8985-c5db798309aa",
+      "quantity": 2,
+      "unitPrice": 150.00,
+      "saleDiscount": {
+        "amount": 10.00
+      },
+      "notes": "Bulk order discount applied"
+    }
+  ],
+  "payments": [
+    {
+      "paymentMethodId": "151998234",
+      "amount": 290.00,
+      "transactionId": "TXN-78901",
+      "authorizationCode": "AUTH-456"
+    }
+  ],
+  "orderLevelDiscount": {
+    "amount": 5.00
+  },
+  "notes": "Second test order for TradeUnleashed sync",
+  "customerNotes": "Customer requested bulk pricing"
+}
+

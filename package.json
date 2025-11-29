@@ -25,6 +25,7 @@
     "sync:tu:test": "tsx src/scripts/sync-tradeunleashed.ts -- --test",
     "worker:sync": "tsx src/scripts/start-sync-worker.ts",
     "test:tu-connection": "tsx src/scripts/test-tradeunleashed-connection.ts",
+    "check-product": "node check-product.js",
     "db:start": "docker-compose up -d",
     "db:stop": "docker-compose down",
     "db:reset": "docker-compose down -v && docker-compose up -d",

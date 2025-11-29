@@ -1,0 +1,40 @@
+{
+  "locationId": "5da9068e-5bb3-4ee3-8c2e-e0fc3bc28ea4",
+  "cashierId": "5abd7a19-b236-4d17-854c-2c491c9a5c5d",
+  "customerId": null,
+  "lineItems": [
+    {
+      "variantId": "377ad85d-f929-4f38-b6de-6a88e986f2b3",
+      "quantity": 2,
+      "unitPrice": 100.00,
+      "saleDiscount": {
+        "amount": 10.00
+      },
+      "customDiscount": {
+        "percent": 5
+      },
+      "notes": "Line item notes (optional)"
+    }
+  ],
+  "payments": [
+    {
+      "paymentMethodId": "20702044",
+      "amount": 180.00,
+      "transactionId": "TXN-12345",
+      "authorizationCode": "AUTH-123",
+      "cardLast4": "1234",
+      "cardBrand": "Visa"
+    }
+  ],
+  "orderLevelDiscount": {
+    "amount": 20.00
+  },
+  "adjustment": {
+    "amount": 5.00,
+    "reason": "Shipping adjustment"
+  },
+  "giftCardNumber": null,
+  "notes": "Order to be synced to TradeUnleashed HQ server",
+  "customerNotes": "Customer-specific notes here"
+}
+

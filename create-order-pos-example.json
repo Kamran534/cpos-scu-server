@@ -1,0 +1,50 @@
+{
+  "locationId": "5726ea68-1b2a-44f0-9357-f08529d72663",
+  "cashierId": "5abd7a19-b236-4d17-854c-2c491c9a5c5d",
+  "customerId": null,
+  "lineItems": [
+    {
+      "variantId": "variant-uuid-here",
+      "quantity": 2,
+      "unitPrice": 100.00,
+      "saleDiscount": {
+        "amount": 10.00
+      },
+      "customDiscount": {
+        "percent": 5
+      },
+      "notes": "Line item notes"
+    },
+    {
+      "variantId": "another-variant-uuid",
+      "quantity": 1,
+      "unitPrice": 50.00,
+      "saleDiscount": {
+        "percent": 10
+      },
+      "notes": null
+    }
+  ],
+  "payments": [
+    {
+      "paymentMethodId": "payment-method-uuid",
+      "amount": 280.00,
+      "transactionId": "txn-12345",
+      "authorizationCode": "AUTH123",
+      "cardLast4": "1234",
+      "cardBrand": "VISA"
+    }
+  ],
+  "orderLevelDiscount": {
+    "amount": 5.00
+  },
+  "adjustment": {
+    "amount": 0,
+    "reason": "No adjustment"
+  },
+  "giftCardNumber": null,
+  "couponCode": null,
+  "notes": "Order notes here",
+  "customerNotes": "Customer-specific notes"
+}
+

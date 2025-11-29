@@ -35,28 +35,31 @@ export interface ProductPayload extends BasePayload {
 export interface ProductVariantPayload extends BasePayload {
   // Link to product
   productSku: string;
-  
+
   // Variant info
   variantSku: string;
   variantName: string;
-  
+
   // Pricing
   price: number;
   compareAtPrice?: number;
   costPrice?: number;
-  
+
   // Physical properties
   weight?: number;
   weightUnit?: string;
   barcode?: string;
-  
+
   // Inventory
   trackInventory: boolean;
   requiresShipping: boolean;
-  
+
   // Status
   isActive: boolean;
-  
+
+  // Custom fields for integration-specific data
+  customFields?: Record<string, unknown>;
+
   // Optional metadata
   metadata?: PayloadMetadata;
 }

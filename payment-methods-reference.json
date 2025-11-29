@@ -1,0 +1,86 @@
+{
+  "availablePaymentMethods": [
+    {
+      "id": "20702044",
+      "name": "Credit Card",
+      "paymentMethodType": "BANK_TRANSFER"
+    },
+    {
+      "id": "151998234",
+      "name": "Jazz Cash",
+      "paymentMethodType": "CREDIT_CARD"
+    },
+    {
+      "id": "187130438",
+      "name": "Bank Deposit",
+      "paymentMethodType": "CREDIT_CARD"
+    },
+    {
+      "id": "330402031",
+      "name": "bogus",
+      "paymentMethodType": "CREDIT_CARD"
+    },
+    {
+      "id": "475887588",
+      "name": "Credit card 1 Machine",
+      "paymentMethodType": "BANK_TRANSFER"
+    },
+    {
+      "id": "669930762",
+      "name": "manual",
+      "paymentMethodType": "CREDIT_CARD"
+    },
+    {
+      "id": "1713150230",
+      "name": "Easy Paisa",
+      "paymentMethodType": "BANK_TRANSFER"
+    },
+    {
+      "id": "1725531652",
+      "name": "silk",
+      "paymentMethodType": "BANK_TRANSFER"
+    },
+    {
+      "id": "1731813927",
+      "name": "stitch&Style",
+      "paymentMethodType": "BANK_TRANSFER"
+    },
+    {
+      "id": "1897294503",
+      "name": "credit",
+      "paymentMethodType": "BANK_TRANSFER"
+    },
+    {
+      "id": "1898226386",
+      "name": "okasha",
+      "paymentMethodType": "BANK_TRANSFER"
+    },
+    {
+      "id": "1898234039",
+      "name": "credit",
+      "paymentMethodType": "BANK_TRANSFER"
+    },
+    {
+      "id": "2020739896",
+      "name": "jazzcash",
+      "paymentMethodType": "BANK_TRANSFER"
+    },
+    {
+      "id": "2020754944",
+      "name": "jazzcash",
+      "paymentMethodType": "BANK_TRANSFER"
+    }
+  ],
+  "usage": {
+    "note": "Use the 'id' field as paymentMethodId in the order creation request",
+    "example": {
+      "payments": [
+        {
+          "paymentMethodId": "2020754944",
+          "amount": 100.00
+        }
+      ]
+    }
+  }
+}
+

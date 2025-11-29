@@ -36,12 +36,12 @@ export class IntegrationOrchestrator {
     const startTime = Date.now();
 
     try {
-      console.log(`[Orchestrator] Syncing products from ${this.integration.name}...`);
+      // console.log(`[Orchestrator] Syncing products from ${this.integration.name}...`);
 
       // STEP 1: Integration layer builds payloads (through interface)
       const batchPayload = await this.integration.syncProducts(options);
 
-      console.log(`[Orchestrator] Received ${batchPayload.products.length} products from ${this.integration.name}`);
+      // console.log(`[Orchestrator] Received ${batchPayload.products.length} products from ${this.integration.name}`);
       
       if (batchPayload.products.length === 0) {
         console.warn(`[Orchestrator] ⚠️ No products received from ${this.integration.name}. Check API credentials and connection.`);

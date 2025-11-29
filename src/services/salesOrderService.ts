@@ -190,9 +190,9 @@ export class SalesOrderService {
         const newOrder = await tx.saleOrder.create({
           data: {
             orderNumber,
-            locationId: data.locationId,
-            cashierId: data.cashierId,
-            customerId: data.customerId,
+            location: { connect: { id: data.locationId } },
+            cashier: { connect: { id: data.cashierId } },
+            customer: data.customerId ? { connect: { id: data.customerId } } : undefined,
             subtotal: new Prisma.Decimal(calculation.subtotal),
             taxAmount: new Prisma.Decimal(calculation.taxAmount),
             discountAmount: new Prisma.Decimal(
@@ -209,6 +209,7 @@ export class SalesOrderService {
             notes: data.notes,
             customerNotes: data.customerNotes,
             status: 'Open',
+            // syncStatus defaults to 'Pending' - will be synced to TradeUnleashed later
           },
         });
 
@@ -251,72 +252,97 @@ export class SalesOrderService {
         // Process payments if provided
         let totalAmountPaid = 0;
         if (data.payments && data.payments.length > 0) {
-          // Map numeric IDs to payment method codes (for backward compatibility)
-          const paymentMethodIdToCode: Record<string, string> = {
-            '1': 'CASH',
-            '2': 'CARD',
-            '3': 'BANK_TRANSFER',
-            '4': 'CHECK',
-            '5': 'GIFT_CARD',
-            '6': 'STORE_CREDIT',
-            '7': 'ON_ACCOUNT',
-          };
-
           for (const payment of data.payments) {
-            // Try to find payment method by ID first (UUID)
+            // Try to find payment method by ID first (UUID from PaymentMethod table)
             let paymentMethod = await tx.paymentMethod.findUnique({
               where: { id: payment.paymentMethodId },
             });
 
-            // If not found by ID, try to find by code
+            // If not found, try TradePaymentMethod table (BigInt ID)
             if (!paymentMethod) {
-              let code: string | undefined;
-              
-              // Check if it's a numeric ID that maps to a code
-              if (paymentMethodIdToCode[payment.paymentMethodId]) {
-                code = paymentMethodIdToCode[payment.paymentMethodId];
-              } 
-              // Check if it's already a code (lowercase or uppercase)
-              else if (typeof payment.paymentMethodId === 'string') {
-                // Try uppercase version (e.g., "cash" -> "CASH")
-                const upperCode = payment.paymentMethodId.toUpperCase();
-                // Check if it matches a known code
-                if (Object.values(paymentMethodIdToCode).includes(upperCode)) {
-                  code = upperCode;
-                } else {
-                  // Try using the uppercase value directly as code
-                  code = upperCode;
-                }
-              }
-
-              if (code) {
-                paymentMethod = await tx.paymentMethod.findUnique({
-                  where: { code },
+              try {
+                const tradePaymentMethod = await tx.tradePaymentMethod.findUnique({
+                  where: { id: BigInt(payment.paymentMethodId) },
                 });
-                if (!paymentMethod) {
-                  // Try case-insensitive search as fallback
-                  const allMethods = await tx.paymentMethod.findMany({
+
+                if (tradePaymentMethod) {
+                  // Get the payment method type/name from TradePaymentMethod
+                  const methodName = tradePaymentMethod.name || tradePaymentMethod.paymentMethodType || 'CASH';
+                  
+                  // Try to find PaymentMethod by name (case-insensitive)
+                  const allPaymentMethods = await tx.paymentMethod.findMany({
                     where: { isActive: true },
                   });
-                  paymentMethod = allMethods.find(
-                    pm => pm.code.toUpperCase() === code.toUpperCase()
-                  ) ?? null;
                   
+                  paymentMethod = allPaymentMethods.find(
+                    pm => pm.name.toUpperCase() === methodName.toUpperCase() ||
+                          pm.code.toUpperCase() === methodName.toUpperCase()
+                  ) ?? null;
+
+                  // If still not found, try to find by code using the paymentMethodType
+                  if (!paymentMethod && tradePaymentMethod.paymentMethodType) {
+                    const methodType = tradePaymentMethod.paymentMethodType;
+                    paymentMethod = allPaymentMethods.find(
+                      pm => pm.code.toUpperCase() === methodType.toUpperCase()
+                    ) ?? null;
+                  }
+
+                  // If still not found, create a PaymentMethod from TradePaymentMethod data
                   if (!paymentMethod) {
-                    console.error(`[SalesOrder] Payment method not found by code: ${code} (ID: ${payment.paymentMethodId})`);
+                    // Map TradePaymentMethod paymentMethodType to PaymentMethodType enum
+                    const mapTradePaymentTypeToEnum = (type: string | null): 'Cash' | 'Card' | 'BankTransfer' | 'Check' | 'GiftCard' | 'StoreCredit' | 'OnAccount' => {
+                      if (!type) return 'Cash';
+                      const upperType = type.toUpperCase();
+                      if (upperType.includes('CASH')) return 'Cash';
+                      if (upperType.includes('CARD') || upperType.includes('CREDIT') || upperType.includes('DEBIT')) return 'Card';
+                      if (upperType.includes('BANK') || upperType.includes('TRANSFER')) return 'BankTransfer';
+                      if (upperType.includes('CHECK') || upperType.includes('CHEQUE')) return 'Check';
+                      if (upperType.includes('GIFT')) return 'GiftCard';
+                      if (upperType.includes('STORE') || upperType.includes('CREDIT')) return 'StoreCredit';
+                      if (upperType.includes('ACCOUNT')) return 'OnAccount';
+                      return 'Cash'; // Default
+                    };
+
+                    // Use paymentMethodType as code, or name if type is not available
+                    const code = tradePaymentMethod.paymentMethodType || 
+                                tradePaymentMethod.name.toUpperCase().replace(/\s+/g, '_') || 
+                                'CASH';
+                    
+                    paymentMethod = await tx.paymentMethod.create({
+                      data: {
+                        code: code,
+                        name: tradePaymentMethod.name,
+                        type: mapTradePaymentTypeToEnum(tradePaymentMethod.paymentMethodType),
+                        isActive: true,
+                      },
+                    });
                   }
                 }
-              } else {
-                console.error(`[SalesOrder] No code mapping found for payment method ID: ${payment.paymentMethodId}`);
+              } catch (e) {
+                // If BigInt conversion fails, it's not a TradePaymentMethod ID
+                console.log(`[SalesOrder] Payment method ID ${payment.paymentMethodId} is not a valid UUID or BigInt`);
               }
             }
 
+            // If still not found, try to find by code (direct lookup)
             if (!paymentMethod) {
-              const availableCodes = Object.values(paymentMethodIdToCode).join(', ');
+              paymentMethod = await tx.paymentMethod.findUnique({
+                where: { code: payment.paymentMethodId.toUpperCase() },
+              });
+            }
+
+            if (!paymentMethod) {
+              // Get available payment methods for error message
+              const availableMethods = await tx.paymentMethod.findMany({
+                where: { isActive: true },
+                select: { code: true, name: true },
+              });
+              const availableCodes = availableMethods.map(pm => pm.code).join(', ');
+              
               throw new Error(
                 `Payment method not found: ${payment.paymentMethodId}. ` +
                 `Available codes: ${availableCodes}. ` +
-                `Tried to map to code: ${paymentMethodIdToCode[payment.paymentMethodId] || payment.paymentMethodId.toUpperCase?.() || 'N/A'}`
+                `Please use a valid PaymentMethod UUID or TradePaymentMethod ID.`
               );
             }
 
@@ -788,3 +814,4 @@ export class SalesOrderService {
 }
 
 export default SalesOrderService;
+

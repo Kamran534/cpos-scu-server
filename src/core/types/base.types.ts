@@ -13,7 +13,7 @@ export interface BaseEntity {
 export interface QueryOptions {
   include?: Record<string, boolean>;
   orderBy?: Record<string, 'asc' | 'desc'>;
-  where?: Record<string, any>;
+  where?: Record<string, unknown>;
 }
 
 export interface PaginatedResponse<T> {
@@ -24,7 +24,7 @@ export interface PaginatedResponse<T> {
   totalPages: number;
 }
 
-export interface ProcessResult<T = any> {
+export interface ProcessResult<T = unknown> {
   success: boolean;
   data?: T;
   error?: string;
@@ -34,6 +34,6 @@ export interface ProcessResult<T = any> {
 export interface ValidationError {
   field: string;
   message: string;
-  value?: any;
+  value?: unknown;
 }
 

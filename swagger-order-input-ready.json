@@ -1,0 +1,48 @@
+{
+  "storeId": 1,
+  "locationId": "184806",
+  "cashierId": "5abd7a19-b236-4d17-854c-2c491c9a5c5d",
+  "orders": [
+    {
+      "id": 1504723025127,
+      "orderNumber": "SO-TU-5",
+      "customerId": null,
+      "orderDate": "2024-11-02T01:29:27.859Z",
+      "status": "confirmed",
+      "totalAmount": 1000,
+      "lastModifiedOn": "2024-11-02T01:29:27.859Z",
+      "lines": [
+        {
+          "id": 1611469024988,
+          "productId": 359605,
+          "quantity": 1,
+          "unitPrice": 1000,
+          "discount": 0,
+          "taxAmount": 0,
+          "lineTotal": 1000
+        }
+      ]
+    },
+    {
+      "id": 1657756891429,
+      "orderNumber": "SO-TU-6",
+      "customerId": null,
+      "orderDate": "2024-11-02T01:29:35.427Z",
+      "status": "confirmed",
+      "totalAmount": 1000,
+      "lastModifiedOn": "2024-11-02T01:29:35.427Z",
+      "lines": [
+        {
+          "id": 1653107871987,
+          "productId": 359605,
+          "quantity": 1,
+          "unitPrice": 1000,
+          "discount": 0,
+          "taxAmount": 0,
+          "lineTotal": 1000
+        }
+      ]
+    }
+  ]
+}
+

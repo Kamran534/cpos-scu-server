@@ -1,0 +1,12 @@
+{
+  "locationId": "1f7024c1-ba94-4827-baef-390773e1b4ae",
+  "cashierId": "5abd7a19-b236-4d17-854c-2c491c9a5c5d",
+  "lineItems": [
+    {
+      "variantId": "1dc94e5d-7cbb-4df9-a6b9-1ed83664d00b",
+      "quantity": 1,
+      "unitPrice": 100.00
+    }
+  ]
+}
+
